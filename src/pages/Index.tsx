@@ -35,7 +35,9 @@ const Index = () => {
   useEffect(() => {
     // Ler parâmetros do hash para funcionar com HashRouter
     const hash = window.location.hash;
+    console.log("Full hash:", hash);
     const searchParams = new URLSearchParams(hash.includes('?') ? hash.split('?')[1] : '');
+    console.log("SearchParams:", searchParams.toString());
     
     const params = {
       name: searchParams.get("name"),
