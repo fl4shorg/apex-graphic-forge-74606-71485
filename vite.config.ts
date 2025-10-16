@@ -11,6 +11,12 @@ export default defineConfig(({ mode }) => ({
     strictPort: true,
     allowedHosts: true,
     hmr: false,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+    },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

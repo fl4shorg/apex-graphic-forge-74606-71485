@@ -1,0 +1,18 @@
+{
+  "name": "banner-api-server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.2.8",
+    "@resvg/resvg-js": "latest",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "form-data": "^4.0.0",
+    "node-catbox": "^3.4.0",
+    "satori": "latest",
+    "uuid": "^13.0.0"
+  }
+}

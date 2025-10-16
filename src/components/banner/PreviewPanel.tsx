@@ -1049,26 +1049,26 @@ export const PreviewPanel = ({
     setIsUploading(true);
     
     try {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      const blob = await new Promise<Blob>((resolve) => {
-        canvas.toBlob((b) => b && resolve(b), "image/png");
-      });
-
-      const formData = new FormData();
-      formData.append("file", blob, "neext-banner.png");
-
-      const response = await fetch("https://www.api.neext.online/upload/catbox", {
+      const response = await fetch("/api/generate", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: config.name,
+          speed: config.speed,
+          label: config.label,
+          system: config.system,
+          datetime: config.datetime,
+          wallpaper: config.wallpaper,
+          avatar: config.avatar,
+        }),
       });
 
       if (response.ok) {
         const result = await response.json();
         setCatboxUrl(result.url);
         
-        // Verifica se tem parâmetros na URL (se tiver, retorna JSON)
         const hash = window.location.hash;
         const searchParams = new URLSearchParams(hash.includes('?') ? hash.split('?')[1] : '');
         const hasUrlParams = Array.from(searchParams.keys()).some(key => 
@@ -1076,7 +1076,6 @@ export const PreviewPanel = ({
         );
         
         if (hasUrlParams) {
-          // Exibe resultado em JSON na página
           const jsonResult = {
             success: true,
             url: result.url,
@@ -1092,10 +1091,11 @@ export const PreviewPanel = ({
           console.log("JSON Result:", jsonResult);
           document.body.innerHTML = `<pre style="color: white; font-family: monospace; padding: 20px; background: #000;">${JSON.stringify(jsonResult, null, 2)}</pre>`;
         } else {
-          toast.success("Banner enviado com sucesso!");
+          toast.success("Banner gerado com Satori e enviado para Catbox!");
         }
       } else {
-        toast.error("Erro ao enviar banner");
+        const error = await response.json();
+        toast.error(error.error || "Erro ao gerar banner");
       }
     } catch (error) {
       console.error("Erro:", error);

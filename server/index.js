@@ -1,0 +1,343 @@
+import express from 'express';
+import cors from 'cors';
+import satori from 'satori';
+import { Resvg } from '@resvg/resvg-js';
+import { readFileSync, writeFileSync, unlinkSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { Catbox } from 'node-catbox';
+import { v4 as uuidv4 } from 'uuid';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const app = express();
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
+
+const PORT = 3001;
+
+const ALLOWED_IMAGE_HOSTS = [
+  'i.imgur.com',
+  'imgur.com',
+  'files.catbox.moe',
+  'catbox.moe',
+  'i.ibb.co',
+  'cdn.discordapp.com',
+  'media.discordapp.net',
+];
+
+const isValidImageUrl = (url) => {
+  if (!url) return true;
+  try {
+    const parsed = new URL(url);
+    
+    if (parsed.protocol !== 'https:') return false;
+    
+    const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+    const hasValidExt = validExtensions.some(ext => parsed.pathname.toLowerCase().endsWith(ext));
+    
+    const isAllowedHost = ALLOWED_IMAGE_HOSTS.some(host => 
+      parsed.hostname === host || parsed.hostname.endsWith(`.${host}`)
+    );
+    
+    return hasValidExt && isAllowedHost;
+  } catch {
+    return false;
+  }
+};
+
+app.post('/api/generate', async (req, res) => {
+  try {
+    const { name, speed, label, system, datetime, wallpaper, avatar } = req.body;
+
+    if ((wallpaper && !isValidImageUrl(wallpaper)) || (avatar && !isValidImageUrl(avatar))) {
+      return res.status(400).json({
+        success: false,
+        error: 'URL de imagem inválida. Use apenas URLs HTTPS de imagens válidas.',
+      });
+    }
+
+    const now = new Date();
+    const dateText = datetime?.trim() 
+      ? datetime.split(' - ')[0] 
+      : now.toLocaleDateString('pt-BR');
+    const timeText = datetime?.trim() 
+      ? datetime.split(' - ')[1] 
+      : now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+    const bannerElements = {
+      type: 'div',
+      props: {
+        style: {
+          display: 'flex',
+          width: '1365px',
+          height: '618px',
+          position: 'relative',
+          background: 'linear-gradient(180deg, #0a1635 0%, #0a1129 100%)',
+        },
+        children: [
+          wallpaper && {
+            type: 'img',
+            props: {
+              src: wallpaper,
+              style: {
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                opacity: 0.3,
+              },
+            },
+          },
+          {
+            type: 'div',
+            props: {
+              style: {
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                background: 'rgba(10, 15, 30, 0.7)',
+                display: 'flex',
+                flexDirection: 'column',
+              },
+              children: [
+                {
+                  type: 'div',
+                  props: {
+                    style: {
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      padding: '30px',
+                      alignItems: 'center',
+                    },
+                    children: [
+                      {
+                        type: 'div',
+                        props: {
+                          style: { display: 'flex', alignItems: 'center', gap: '10px' },
+                          children: [
+                            {
+                              type: 'div',
+                              props: {
+                                style: {
+                                  width: '24px',
+                                  height: '24px',
+                                  border: '2px solid #00f7ff',
+                                  borderRadius: '4px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                },
+                                children: [
+                                  {
+                                    type: 'div',
+                                    props: {
+                                      style: {
+                                        width: '20px',
+                                        height: '6px',
+                                        background: '#00f7ff',
+                                        borderRadius: '4px 4px 0 0',
+                                      },
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                            { type: 'span', props: { style: { color: '#fff', fontSize: '16px', fontWeight: 700 }, children: dateText } },
+                          ],
+                        },
+                      },
+                      {
+                        type: 'div',
+                        props: {
+                          style: { display: 'flex', alignItems: 'center', gap: '10px' },
+                          children: [
+                            { type: 'span', props: { style: { color: '#fff', fontSize: '16px', fontWeight: 700 }, children: timeText } },
+                            {
+                              type: 'div',
+                              props: {
+                                style: {
+                                  width: '24px',
+                                  height: '24px',
+                                  border: '2px solid #00f7ff',
+                                  borderRadius: '50%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                },
+                                children: [
+                                  {
+                                    type: 'div',
+                                    props: {
+                                      style: {
+                                        width: '2px',
+                                        height: '8px',
+                                        background: '#00f7ff',
+                                      },
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  type: 'div',
+                  props: {
+                    style: {
+                      display: 'flex',
+                      flex: 1,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      position: 'relative',
+                    },
+                    children: avatar ? [
+                      {
+                        type: 'img',
+                        props: {
+                          src: avatar,
+                          style: {
+                            width: '260px',
+                            height: '260px',
+                            borderRadius: '50%',
+                            border: '4px solid #00f7ff',
+                            objectFit: 'cover',
+                            boxShadow: '0 0 40px rgba(0, 247, 255, 0.5)',
+                          },
+                        },
+                      },
+                    ] : [],
+                  },
+                },
+                {
+                  type: 'div',
+                  props: {
+                    style: {
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      padding: '40px',
+                      gap: '20px',
+                    },
+                    children: [
+                      {
+                        type: 'div',
+                        props: {
+                          style: {
+                            fontSize: '80px',
+                            fontWeight: 900,
+                            color: '#00f7ff',
+                            textTransform: 'uppercase',
+                            textShadow: '0 0 30px rgba(0, 247, 255, 0.8)',
+                          },
+                          children: name || 'NEEXT',
+                        },
+                      },
+                      {
+                        type: 'div',
+                        props: {
+                          style: {
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '30px',
+                          },
+                          children: [
+                            {
+                              type: 'div',
+                              props: {
+                                style: {
+                                  fontSize: '120px',
+                                  fontWeight: 900,
+                                  color: '#00f7ff',
+                                  textShadow: '0 0 40px rgba(0, 247, 255, 1)',
+                                },
+                                children: speed || '999',
+                              },
+                            },
+                            {
+                              type: 'div',
+                              props: {
+                                style: {
+                                  fontSize: '40px',
+                                  fontWeight: 700,
+                                  color: '#fff',
+                                  textTransform: 'uppercase',
+                                },
+                                children: label || 'VELOCIDADE',
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ].filter(Boolean),
+      },
+    };
+
+    const fontPath = join(__dirname, 'node_modules', '@fontsource', 'inter', 'files', 'inter-latin-700-normal.woff');
+    const fontData = readFileSync(fontPath);
+
+    const svg = await satori(bannerElements, {
+      width: 1365,
+      height: 618,
+      fonts: [
+        {
+          name: 'sans-serif',
+          data: fontData,
+          weight: 700,
+          style: 'normal',
+        },
+      ],
+    });
+
+    const resvg = new Resvg(svg);
+    const pngData = resvg.render();
+    const pngBuffer = pngData.asPng();
+
+    const tempPath = join(__dirname, `temp-banner-${uuidv4()}.png`);
+    try {
+      writeFileSync(tempPath, pngBuffer);
+      const catbox = new Catbox();
+      const catboxUrl = await catbox.uploadFile({ path: tempPath });
+      return res.json({
+        success: true,
+        url: catboxUrl,
+      });
+    } finally {
+      try {
+        unlinkSync(tempPath);
+      } catch (e) {
+        console.error('Erro ao deletar arquivo temporário:', e);
+      }
+    }
+
+  } catch (error) {
+    console.error('Erro ao gerar banner:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 API rodando em http://0.0.0.0:${PORT}`);
+});
