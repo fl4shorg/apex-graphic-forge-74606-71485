@@ -928,12 +928,12 @@ export const PreviewPanel = ({
     // System with computer icon and enhanced glow - positioned further from speed
     const system = config.system.toUpperCase();
     if (system) {
-      const systemY = speedY + 140;
+      const systemY = speedY + 125;
       
       // Measure text to position icon correctly
       ctx.font = "600 22px Orbitron, sans-serif";
       const systemTextWidth = ctx.measureText(system).width;
-      const iconX = centerX - systemTextWidth / 2 - 45;
+      const iconX = centerX - systemTextWidth / 2 - 30;
       
       // Computer/Monitor icon - properly aligned
       ctx.save();
