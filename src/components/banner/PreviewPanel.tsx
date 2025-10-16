@@ -16,40 +16,69 @@ interface PreviewPanelProps {
   };
   setCatboxUrl: (url: string | null) => void;
   setIsUploading: (uploading: boolean) => void;
+  autoGenerate?: boolean;
+  setAutoGenerate?: (value: boolean) => void;
 }
 
 export const PreviewPanel = ({
   config,
   setCatboxUrl,
   setIsUploading,
+  autoGenerate = false,
+  setAutoGenerate,
 }: PreviewPanelProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [wallpaperImg, setWallpaperImg] = useState<HTMLImageElement | null>(null);
   const [avatarImg, setAvatarImg] = useState<HTMLImageElement | null>(null);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
 
   useEffect(() => {
     if (config.wallpaper) {
       const img = new Image();
-      img.onload = () => setWallpaperImg(img);
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        setWallpaperImg(img);
+        checkImagesLoaded();
+      };
       img.src = config.wallpaper;
     } else {
       setWallpaperImg(null);
+      checkImagesLoaded();
     }
   }, [config.wallpaper]);
 
   useEffect(() => {
     if (config.avatar) {
       const img = new Image();
-      img.onload = () => setAvatarImg(img);
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        setAvatarImg(img);
+        checkImagesLoaded();
+      };
       img.src = config.avatar;
     } else {
       setAvatarImg(null);
+      checkImagesLoaded();
     }
   }, [config.avatar]);
+
+  const checkImagesLoaded = () => {
+    setImagesLoaded(true);
+  };
 
   useEffect(() => {
     drawCanvas();
   }, [config, wallpaperImg, avatarImg]);
+
+  // Auto-gerar quando tiver parâmetros e imagens carregadas
+  useEffect(() => {
+    if (autoGenerate && imagesLoaded) {
+      setTimeout(() => {
+        handleGenerate();
+        setAutoGenerate?.(false);
+      }, 500);
+    }
+  }, [autoGenerate, imagesLoaded]);
 
   const drawCanvas = () => {
     const canvas = canvasRef.current;

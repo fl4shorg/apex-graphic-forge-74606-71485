@@ -31,6 +31,7 @@ const Index = () => {
 
   const [catboxUrl, setCatboxUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [autoGenerate, setAutoGenerate] = useState(false);
 
   // Carregar parâmetros da URL ao montar o componente
   useEffect(() => {
@@ -49,6 +50,8 @@ const Index = () => {
     
     if (validation.success) {
       const validParams = validation.data;
+      const hasParams = Object.values(params).some(v => v !== null);
+      
       setBannerConfig((prev) => ({
         ...prev,
         ...(validParams.name && { name: validParams.name }),
@@ -59,6 +62,11 @@ const Index = () => {
         ...(validParams.wallpaper && { wallpaper: validParams.wallpaper }),
         ...(validParams.avatar && { avatar: validParams.avatar }),
       }));
+      
+      // Se tiver parâmetros, auto-gerar após carregar
+      if (hasParams) {
+        setAutoGenerate(true);
+      }
     }
   }, [searchParams]);
 
@@ -84,6 +92,8 @@ const Index = () => {
               config={bannerConfig}
               setCatboxUrl={setCatboxUrl}
               setIsUploading={setIsUploading}
+              autoGenerate={autoGenerate}
+              setAutoGenerate={setAutoGenerate}
             />
           </div>
         </main>
