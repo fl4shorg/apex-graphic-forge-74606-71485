@@ -607,6 +607,36 @@ app.get('/api/banner', async (req, res) => {
   }
 });
 
+app.get('/', (req, res) => {
+  res.json({
+    name: 'NEEXT Banner API',
+    version: '1.0.0',
+    status: 'online',
+    endpoints: {
+      health: {
+        method: 'GET',
+        path: '/health',
+        description: 'Verificar status da API'
+      },
+      generateBanner: {
+        method: 'GET',
+        path: '/api/banner',
+        description: 'Gerar banner e enviar para Catbox',
+        parameters: {
+          name: 'Nome a exibir (ex: NEEXT)',
+          speed: 'Valor numérico (ex: 999)',
+          label: 'Texto do rótulo (ex: VELOCIDADE)',
+          wallpaper: 'URL HTTPS da imagem de fundo',
+          avatar: 'URL HTTPS da foto de perfil',
+          datetime: 'Data e hora customizada (ex: 16/10/2025 - 20:30)'
+        },
+        example: '/api/banner?name=TESTE&speed=100&label=PING'
+      }
+    },
+    documentation: 'Veja API_README.md para documentação completa'
+  });
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });

@@ -68,7 +68,25 @@ https://neext-banner-api.onrender.com
 
 ## 🧪 Como Testar com cURL
 
-### Teste 1: Health Check
+### Teste 1: Página Inicial (Informações da API)
+```bash
+curl https://neext-banner-api.onrender.com/
+```
+
+**Resposta esperada:**
+```json
+{
+  "name": "NEEXT Banner API",
+  "version": "1.0.0",
+  "status": "online",
+  "endpoints": {
+    "health": {...},
+    "generateBanner": {...}
+  }
+}
+```
+
+### Teste 2: Health Check
 ```bash
 curl https://neext-banner-api.onrender.com/health
 ```
@@ -78,7 +96,7 @@ curl https://neext-banner-api.onrender.com/health
 {"status":"ok"}
 ```
 
-### Teste 2: Gerar Banner Simples
+### Teste 3: Gerar Banner Simples
 ```bash
 curl "https://neext-banner-api.onrender.com/api/banner?name=TESTE&speed=100&label=PING"
 ```
@@ -91,12 +109,12 @@ curl "https://neext-banner-api.onrender.com/api/banner?name=TESTE&speed=100&labe
 }
 ```
 
-### Teste 3: Banner com Imagens
+### Teste 4: Banner com Imagens
 ```bash
 curl "https://neext-banner-api.onrender.com/api/banner?name=PLAYER&speed=50&label=MS&avatar=https://i.imgur.com/exemplo.png&wallpaper=https://i.imgur.com/fundo.jpg"
 ```
 
-### Teste 4: Banner Completo
+### Teste 5: Banner Completo
 ```bash
 curl "https://neext-banner-api.onrender.com/api/banner?name=NEEXT&speed=999&label=VELOCIDADE&datetime=16/10/2025%20-%2020:30&avatar=https://i.imgur.com/perfil.png"
 ```
