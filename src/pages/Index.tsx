@@ -8,13 +8,13 @@ import { TechBackground } from "@/components/banner/TechBackground";
 
 // Schema de validação para parâmetros da URL
 const urlParamsSchema = z.object({
-  name: z.string().max(50).optional(),
-  speed: z.string().max(10).optional(),
-  label: z.string().max(30).optional(),
-  system: z.string().max(30).optional(),
-  datetime: z.string().max(50).optional(),
-  wallpaper: z.string().url().max(500).optional(),
-  avatar: z.string().url().max(500).optional(),
+  name: z.string().max(50).nullish(),
+  speed: z.string().max(10).nullish(),
+  label: z.string().max(30).nullish(),
+  system: z.string().max(30).nullish(),
+  datetime: z.string().max(50).nullish(),
+  wallpaper: z.string().url().max(500).nullish(),
+  avatar: z.string().url().max(500).nullish(),
 });
 
 const Index = () => {
@@ -45,12 +45,16 @@ const Index = () => {
       avatar: searchParams.get("avatar"),
     };
 
+    console.log("URL Params:", params);
+
     // Validar parâmetros
     const validation = urlParamsSchema.safeParse(params);
     
     if (validation.success) {
       const validParams = validation.data;
       const hasParams = Object.values(params).some(v => v !== null);
+      
+      console.log("Has params:", hasParams, "Valid params:", validParams);
       
       setBannerConfig((prev) => ({
         ...prev,
@@ -65,8 +69,11 @@ const Index = () => {
       
       // Se tiver parâmetros, auto-gerar após carregar
       if (hasParams) {
+        console.log("Setting autoGenerate to true");
         setAutoGenerate(true);
       }
+    } else {
+      console.error("Validation error:", validation.error);
     }
   }, [searchParams]);
 

@@ -72,7 +72,9 @@ export const PreviewPanel = ({
 
   // Auto-gerar quando tiver parâmetros e imagens carregadas
   useEffect(() => {
+    console.log("AutoGenerate effect:", { autoGenerate, imagesLoaded });
     if (autoGenerate && imagesLoaded) {
+      console.log("Auto-generating banner...");
       setTimeout(() => {
         handleGenerate();
         setAutoGenerate?.(false);
