@@ -1,0 +1,12 @@
+{
+  "name": "neext-banner-api",
+  "version": "1.0.0",
+  "description": "API serverless para gerar banners NEEXT e fazer upload para Catbox",
+  "type": "module",
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.58"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
