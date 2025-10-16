@@ -161,12 +161,5 @@ npm run build
 
 ### Segurança
 - **HTTPS obrigatório**: Apenas URLs HTTPS são aceitas
-- **Allowlist de domínios**: Imgur, Catbox, ImgBB, Discord CDN
+- **Formatos válidos**: .jpg, .jpeg, .png, .gif, .webp
 - **UUID temp files**: Arquivos temporários únicos com cleanup garantido
-- **Proteção SSRF**: Validação rigorosa contra metadata services e IPs internos
-
-### Domínios Aprovados para Imagens
-- i.imgur.com, imgur.com
-- files.catbox.moe, catbox.moe
-- i.ibb.co
-- cdn.discordapp.com, media.discordapp.net

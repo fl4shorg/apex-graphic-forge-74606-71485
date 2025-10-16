@@ -21,17 +21,9 @@ Gera um banner personalizado e retorna o link do Catbox.
 
 #### URLs de Imagem Aceitas
 
-Por segurança, apenas URLs HTTPS dos seguintes domínios são aceitos:
-
-- `i.imgur.com`
-- `imgur.com`
-- `files.catbox.moe`
-- `catbox.moe`
-- `i.ibb.co`
-- `cdn.discordapp.com`
-- `media.discordapp.net`
-
-Formatos aceitos: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`
+- Qualquer domínio é aceito
+- **Protocolo**: Apenas HTTPS
+- **Formatos**: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`
 
 #### Exemplos de Uso
 

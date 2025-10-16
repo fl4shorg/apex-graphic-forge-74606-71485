@@ -17,16 +17,6 @@ app.use(express.json({ limit: '50mb' }));
 
 const PORT = process.env.PORT || 3001;
 
-const ALLOWED_IMAGE_HOSTS = [
-  'i.imgur.com',
-  'imgur.com',
-  'files.catbox.moe',
-  'catbox.moe',
-  'i.ibb.co',
-  'cdn.discordapp.com',
-  'media.discordapp.net',
-];
-
 const isValidImageUrl = (url) => {
   if (!url) return true;
   try {
@@ -37,11 +27,7 @@ const isValidImageUrl = (url) => {
     const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
     const hasValidExt = validExtensions.some(ext => parsed.pathname.toLowerCase().endsWith(ext));
     
-    const isAllowedHost = ALLOWED_IMAGE_HOSTS.some(host => 
-      parsed.hostname === host || parsed.hostname.endsWith(`.${host}`)
-    );
-    
-    return hasValidExt && isAllowedHost;
+    return hasValidExt;
   } catch {
     return false;
   }
