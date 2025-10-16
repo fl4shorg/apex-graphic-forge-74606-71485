@@ -925,17 +925,17 @@ export const PreviewPanel = ({
     ctx.fillText(label, centerX, speedY + 75);
     ctx.shadowBlur = 0;
 
-    // System with computer icon and enhanced glow - positioned closer to speed
+    // System with computer icon and enhanced glow - positioned further from speed
     const system = config.system.toUpperCase();
     if (system) {
-      const systemY = speedY + 115;
+      const systemY = speedY + 140;
       
       // Measure text to position icon correctly
       ctx.font = "600 22px Orbitron, sans-serif";
       const systemTextWidth = ctx.measureText(system).width;
-      const iconX = centerX - systemTextWidth / 2 - 38;
+      const iconX = centerX - systemTextWidth / 2 - 45;
       
-      // Computer/Monitor icon - well aligned
+      // Computer/Monitor icon - properly aligned
       ctx.save();
       ctx.translate(iconX, systemY);
       ctx.strokeStyle = "#00f7ff";
