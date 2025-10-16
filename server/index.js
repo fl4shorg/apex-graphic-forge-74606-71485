@@ -8,6 +8,7 @@ import { Catbox } from 'node-catbox';
 import { v4 as uuidv4 } from 'uuid';
 import https from 'https';
 import http from 'http';
+import { Writable, PassThrough } from 'stream';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -50,8 +51,7 @@ async function loadImageFromUrl(url) {
         try {
           const buffer = Buffer.concat(chunks);
           const isPng = buffer[0] === 0x89 && buffer[1] === 0x50;
-          const stream = require('stream');
-          const bufferStream = new stream.PassThrough();
+          const bufferStream = new PassThrough();
           bufferStream.end(buffer);
           
           const img = isPng 
@@ -927,8 +927,7 @@ async function drawBanner(config) {
   // Converter para buffer PNG usando pureimage
   return new Promise((resolve, reject) => {
     const chunks = [];
-    const stream = require('stream');
-    const writable = new stream.Writable({
+    const writable = new Writable({
       write(chunk, encoding, callback) {
         chunks.push(chunk);
         callback();
