@@ -143,7 +143,21 @@ npm run build
 - FormData: campo "file" com a imagem PNG
 
 ## Mudanças Recentes (16/10/2025)
-- Removida API backend em Node.js (tudo funciona no frontend agora)
-- Adicionado modo JSON para respostas automáticas
-- Criada versão para deploy na Vercel
-- Limpeza de dependências desnecessárias (canvas, express, etc)
+
+### Migração para Satori (Vercel OG)
+- Implementada API backend com Express na porta 3001
+- Geração de imagens com Satori (JSX → SVG → PNG via Resvg)
+- Upload automático para Catbox via node-catbox
+- Proxy configurado no Vite para /api → http://localhost:3001
+
+### Segurança
+- **HTTPS obrigatório**: Apenas URLs HTTPS são aceitas
+- **Allowlist de domínios**: Imgur, Catbox, ImgBB, Discord CDN
+- **UUID temp files**: Arquivos temporários únicos com cleanup garantido
+- **Proteção SSRF**: Validação rigorosa contra metadata services e IPs internos
+
+### Domínios Aprovados para Imagens
+- i.imgur.com, imgur.com
+- files.catbox.moe, catbox.moe
+- i.ibb.co
+- cdn.discordapp.com, media.discordapp.net
