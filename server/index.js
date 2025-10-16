@@ -22,12 +22,11 @@ const isValidImageUrl = (url) => {
   try {
     const parsed = new URL(url);
     
-    if (parsed.protocol !== 'https:') return false;
+    // Aceita HTTP e HTTPS para compatibilidade
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false;
     
-    const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-    const hasValidExt = validExtensions.some(ext => parsed.pathname.toLowerCase().endsWith(ext));
-    
-    return hasValidExt;
+    // Não exige extensão - muitos CDNs não mostram a extensão na URL
+    return true;
   } catch {
     return false;
   }
@@ -60,7 +59,7 @@ app.post('/api/generate', async (req, res) => {
           width: '1365px',
           height: '618px',
           position: 'relative',
-          background: 'linear-gradient(180deg, #0a1635 0%, #0a1129 100%)',
+          background: wallpaper ? 'transparent' : 'linear-gradient(180deg, #0a1635 0%, #0a1129 100%)',
         },
         children: [
           wallpaper && {
@@ -87,7 +86,7 @@ app.post('/api/generate', async (req, res) => {
                 left: 0,
                 width: '100%',
                 height: '100%',
-                background: 'rgba(10, 15, 30, 0.7)',
+                background: wallpaper ? 'rgba(10, 15, 30, 0.7)' : 'transparent',
                 display: 'flex',
                 flexDirection: 'column',
               },
@@ -98,52 +97,52 @@ app.post('/api/generate', async (req, res) => {
                     style: {
                       display: 'flex',
                       justifyContent: 'space-between',
-                      padding: '30px',
+                      padding: '30px 30px 20px',
                       alignItems: 'center',
                     },
                     children: [
                       {
                         type: 'div',
                         props: {
-                          style: { display: 'flex', alignItems: 'center', gap: '10px' },
+                          style: { display: 'flex', alignItems: 'center', gap: '12px' },
                           children: [
                             {
                               type: 'div',
                               props: {
                                 style: {
-                                  width: '24px',
+                                  width: '22px',
                                   height: '24px',
                                   border: '2px solid #00f7ff',
                                   borderRadius: '4px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
+                                  position: 'relative',
                                 },
                                 children: [
                                   {
                                     type: 'div',
                                     props: {
                                       style: {
-                                        width: '20px',
+                                        width: '100%',
                                         height: '6px',
                                         background: '#00f7ff',
                                         borderRadius: '4px 4px 0 0',
+                                        position: 'absolute',
+                                        top: 0,
                                       },
                                     },
                                   },
                                 ],
                               },
                             },
-                            { type: 'span', props: { style: { color: '#fff', fontSize: '16px', fontWeight: 700 }, children: dateText } },
+                            { type: 'span', props: { style: { color: '#fff', fontSize: '16px', fontWeight: 700, fontFamily: 'Inter' }, children: dateText } },
                           ],
                         },
                       },
                       {
                         type: 'div',
                         props: {
-                          style: { display: 'flex', alignItems: 'center', gap: '10px' },
+                          style: { display: 'flex', alignItems: 'center', gap: '12px' },
                           children: [
-                            { type: 'span', props: { style: { color: '#fff', fontSize: '16px', fontWeight: 700 }, children: timeText } },
+                            { type: 'span', props: { style: { color: '#fff', fontSize: '16px', fontWeight: 700, fontFamily: 'Inter' }, children: timeText } },
                             {
                               type: 'div',
                               props: {
@@ -162,7 +161,7 @@ app.post('/api/generate', async (req, res) => {
                                     props: {
                                       style: {
                                         width: '2px',
-                                        height: '8px',
+                                        height: '10px',
                                         background: '#00f7ff',
                                       },
                                     },
@@ -184,48 +183,36 @@ app.post('/api/generate', async (req, res) => {
                       flex: 1,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      position: 'relative',
-                    },
-                    children: avatar ? [
-                      {
-                        type: 'img',
-                        props: {
-                          src: avatar,
-                          style: {
-                            width: '260px',
-                            height: '260px',
-                            borderRadius: '50%',
-                            border: '4px solid #00f7ff',
-                            objectFit: 'cover',
-                            boxShadow: '0 0 40px rgba(0, 247, 255, 0.5)',
-                          },
-                        },
-                      },
-                    ] : [],
-                  },
-                },
-                {
-                  type: 'div',
-                  props: {
-                    style: {
-                      display: 'flex',
                       flexDirection: 'column',
-                      alignItems: 'center',
-                      padding: '40px',
-                      gap: '20px',
+                      position: 'relative',
+                      gap: '25px',
                     },
                     children: [
-                      {
+                      avatar && {
                         type: 'div',
                         props: {
                           style: {
-                            fontSize: '80px',
-                            fontWeight: 900,
-                            color: '#00f7ff',
-                            textTransform: 'uppercase',
-                            textShadow: '0 0 30px rgba(0, 247, 255, 0.8)',
+                            position: 'relative',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                           },
-                          children: name || 'NEEXT',
+                          children: [
+                            {
+                              type: 'img',
+                              props: {
+                                src: avatar,
+                                style: {
+                                  width: '260px',
+                                  height: '260px',
+                                  borderRadius: '50%',
+                                  border: '6px solid #00f7ff',
+                                  objectFit: 'cover',
+                                  boxShadow: '0 0 40px rgba(0, 247, 255, 0.6)',
+                                },
+                              },
+                            },
+                          ],
                         },
                       },
                       {
@@ -233,38 +220,87 @@ app.post('/api/generate', async (req, res) => {
                         props: {
                           style: {
                             display: 'flex',
+                            flexDirection: 'column',
                             alignItems: 'center',
-                            gap: '30px',
+                            gap: '15px',
                           },
                           children: [
                             {
                               type: 'div',
                               props: {
                                 style: {
-                                  fontSize: '120px',
+                                  fontSize: '70px',
                                   fontWeight: 900,
-                                  color: '#00f7ff',
-                                  textShadow: '0 0 40px rgba(0, 247, 255, 1)',
+                                  color: '#ffffff',
+                                  textTransform: 'uppercase',
+                                  textShadow: '0 0 30px rgba(0, 247, 255, 0.8)',
+                                  fontFamily: 'Inter',
+                                  letterSpacing: '4px',
                                 },
-                                children: speed || '999',
+                                children: name || 'NEEXT',
                               },
                             },
                             {
                               type: 'div',
                               props: {
                                 style: {
-                                  fontSize: '40px',
-                                  fontWeight: 700,
-                                  color: '#fff',
-                                  textTransform: 'uppercase',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '35px',
+                                  padding: '20px 40px',
+                                  background: 'rgba(0, 247, 255, 0.1)',
+                                  borderRadius: '15px',
+                                  border: '2px solid rgba(0, 247, 255, 0.3)',
                                 },
-                                children: label || 'VELOCIDADE',
+                                children: [
+                                  {
+                                    type: 'div',
+                                    props: {
+                                      style: {
+                                        fontSize: '110px',
+                                        fontWeight: 900,
+                                        color: '#00f7ff',
+                                        textShadow: '0 0 50px rgba(0, 247, 255, 1)',
+                                        fontFamily: 'Inter',
+                                      },
+                                      children: speed || '999',
+                                    },
+                                  },
+                                  {
+                                    type: 'div',
+                                    props: {
+                                      style: {
+                                        fontSize: '38px',
+                                        fontWeight: 700,
+                                        color: '#fff',
+                                        textTransform: 'uppercase',
+                                        fontFamily: 'Inter',
+                                        letterSpacing: '2px',
+                                      },
+                                      children: label || 'VELOCIDADE',
+                                    },
+                                  },
+                                ],
                               },
                             },
-                          ],
+                            system && {
+                              type: 'div',
+                              props: {
+                                style: {
+                                  fontSize: '22px',
+                                  fontWeight: 600,
+                                  color: '#00f7ff',
+                                  textShadow: '0 0 20px rgba(0, 247, 255, 0.6)',
+                                  fontFamily: 'Inter',
+                                  letterSpacing: '1px',
+                                },
+                                children: system.toUpperCase(),
+                              },
+                            },
+                          ].filter(Boolean),
                         },
                       },
-                    ],
+                    ].filter(Boolean),
                   },
                 },
               ],
@@ -347,7 +383,7 @@ app.get('/api/banner', async (req, res) => {
           width: '1365px',
           height: '618px',
           position: 'relative',
-          background: 'linear-gradient(180deg, #0a1635 0%, #0a1129 100%)',
+          background: wallpaper ? 'transparent' : 'linear-gradient(180deg, #0a1635 0%, #0a1129 100%)',
         },
         children: [
           wallpaper && {
@@ -374,7 +410,7 @@ app.get('/api/banner', async (req, res) => {
                 left: 0,
                 width: '100%',
                 height: '100%',
-                background: 'rgba(10, 15, 30, 0.7)',
+                background: wallpaper ? 'rgba(10, 15, 30, 0.7)' : 'transparent',
                 display: 'flex',
                 flexDirection: 'column',
               },
@@ -385,52 +421,52 @@ app.get('/api/banner', async (req, res) => {
                     style: {
                       display: 'flex',
                       justifyContent: 'space-between',
-                      padding: '30px',
+                      padding: '30px 30px 20px',
                       alignItems: 'center',
                     },
                     children: [
                       {
                         type: 'div',
                         props: {
-                          style: { display: 'flex', alignItems: 'center', gap: '10px' },
+                          style: { display: 'flex', alignItems: 'center', gap: '12px' },
                           children: [
                             {
                               type: 'div',
                               props: {
                                 style: {
-                                  width: '24px',
+                                  width: '22px',
                                   height: '24px',
                                   border: '2px solid #00f7ff',
                                   borderRadius: '4px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
+                                  position: 'relative',
                                 },
                                 children: [
                                   {
                                     type: 'div',
                                     props: {
                                       style: {
-                                        width: '20px',
+                                        width: '100%',
                                         height: '6px',
                                         background: '#00f7ff',
                                         borderRadius: '4px 4px 0 0',
+                                        position: 'absolute',
+                                        top: 0,
                                       },
                                     },
                                   },
                                 ],
                               },
                             },
-                            { type: 'span', props: { style: { color: '#fff', fontSize: '16px', fontWeight: 700 }, children: dateText } },
+                            { type: 'span', props: { style: { color: '#fff', fontSize: '16px', fontWeight: 700, fontFamily: 'Inter' }, children: dateText } },
                           ],
                         },
                       },
                       {
                         type: 'div',
                         props: {
-                          style: { display: 'flex', alignItems: 'center', gap: '10px' },
+                          style: { display: 'flex', alignItems: 'center', gap: '12px' },
                           children: [
-                            { type: 'span', props: { style: { color: '#fff', fontSize: '16px', fontWeight: 700 }, children: timeText } },
+                            { type: 'span', props: { style: { color: '#fff', fontSize: '16px', fontWeight: 700, fontFamily: 'Inter' }, children: timeText } },
                             {
                               type: 'div',
                               props: {
@@ -449,7 +485,7 @@ app.get('/api/banner', async (req, res) => {
                                     props: {
                                       style: {
                                         width: '2px',
-                                        height: '8px',
+                                        height: '10px',
                                         background: '#00f7ff',
                                       },
                                     },
@@ -471,48 +507,36 @@ app.get('/api/banner', async (req, res) => {
                       flex: 1,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      position: 'relative',
-                    },
-                    children: avatar ? [
-                      {
-                        type: 'img',
-                        props: {
-                          src: avatar,
-                          style: {
-                            width: '260px',
-                            height: '260px',
-                            borderRadius: '50%',
-                            border: '4px solid #00f7ff',
-                            objectFit: 'cover',
-                            boxShadow: '0 0 40px rgba(0, 247, 255, 0.5)',
-                          },
-                        },
-                      },
-                    ] : [],
-                  },
-                },
-                {
-                  type: 'div',
-                  props: {
-                    style: {
-                      display: 'flex',
                       flexDirection: 'column',
-                      alignItems: 'center',
-                      padding: '40px',
-                      gap: '20px',
+                      position: 'relative',
+                      gap: '25px',
                     },
                     children: [
-                      {
+                      avatar && {
                         type: 'div',
                         props: {
                           style: {
-                            fontSize: '80px',
-                            fontWeight: 900,
-                            color: '#00f7ff',
-                            textTransform: 'uppercase',
-                            textShadow: '0 0 30px rgba(0, 247, 255, 0.8)',
+                            position: 'relative',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                           },
-                          children: name || 'NEEXT',
+                          children: [
+                            {
+                              type: 'img',
+                              props: {
+                                src: avatar,
+                                style: {
+                                  width: '260px',
+                                  height: '260px',
+                                  borderRadius: '50%',
+                                  border: '6px solid #00f7ff',
+                                  objectFit: 'cover',
+                                  boxShadow: '0 0 40px rgba(0, 247, 255, 0.6)',
+                                },
+                              },
+                            },
+                          ],
                         },
                       },
                       {
@@ -520,38 +544,87 @@ app.get('/api/banner', async (req, res) => {
                         props: {
                           style: {
                             display: 'flex',
+                            flexDirection: 'column',
                             alignItems: 'center',
-                            gap: '30px',
+                            gap: '15px',
                           },
                           children: [
                             {
                               type: 'div',
                               props: {
                                 style: {
-                                  fontSize: '120px',
+                                  fontSize: '70px',
                                   fontWeight: 900,
-                                  color: '#00f7ff',
-                                  textShadow: '0 0 40px rgba(0, 247, 255, 1)',
+                                  color: '#ffffff',
+                                  textTransform: 'uppercase',
+                                  textShadow: '0 0 30px rgba(0, 247, 255, 0.8)',
+                                  fontFamily: 'Inter',
+                                  letterSpacing: '4px',
                                 },
-                                children: speed || '999',
+                                children: name || 'NEEXT',
                               },
                             },
                             {
                               type: 'div',
                               props: {
                                 style: {
-                                  fontSize: '40px',
-                                  fontWeight: 700,
-                                  color: '#fff',
-                                  textTransform: 'uppercase',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '35px',
+                                  padding: '20px 40px',
+                                  background: 'rgba(0, 247, 255, 0.1)',
+                                  borderRadius: '15px',
+                                  border: '2px solid rgba(0, 247, 255, 0.3)',
                                 },
-                                children: label || 'VELOCIDADE',
+                                children: [
+                                  {
+                                    type: 'div',
+                                    props: {
+                                      style: {
+                                        fontSize: '110px',
+                                        fontWeight: 900,
+                                        color: '#00f7ff',
+                                        textShadow: '0 0 50px rgba(0, 247, 255, 1)',
+                                        fontFamily: 'Inter',
+                                      },
+                                      children: speed || '999',
+                                    },
+                                  },
+                                  {
+                                    type: 'div',
+                                    props: {
+                                      style: {
+                                        fontSize: '38px',
+                                        fontWeight: 700,
+                                        color: '#fff',
+                                        textTransform: 'uppercase',
+                                        fontFamily: 'Inter',
+                                        letterSpacing: '2px',
+                                      },
+                                      children: label || 'VELOCIDADE',
+                                    },
+                                  },
+                                ],
                               },
                             },
-                          ],
+                            system && {
+                              type: 'div',
+                              props: {
+                                style: {
+                                  fontSize: '22px',
+                                  fontWeight: 600,
+                                  color: '#00f7ff',
+                                  textShadow: '0 0 20px rgba(0, 247, 255, 0.6)',
+                                  fontFamily: 'Inter',
+                                  letterSpacing: '1px',
+                                },
+                                children: system.toUpperCase(),
+                              },
+                            },
+                          ].filter(Boolean),
                         },
                       },
-                    ],
+                    ].filter(Boolean),
                   },
                 },
               ],
