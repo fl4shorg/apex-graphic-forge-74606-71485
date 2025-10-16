@@ -56,23 +56,24 @@ const Index = () => {
     
     if (validation.success) {
       const validParams = validation.data;
+      // Verifica se tem algum parâmetro válido (não null)
       const hasParams = Object.values(params).some(v => v !== null);
       
       console.log("Has params:", hasParams, "Valid params:", validParams);
       
-      setBannerConfig((prev) => ({
-        ...prev,
-        ...(validParams.name && { name: validParams.name }),
-        ...(validParams.speed && { speed: validParams.speed }),
-        ...(validParams.label && { label: validParams.label }),
-        ...(validParams.system && { system: validParams.system }),
-        ...(validParams.datetime && { datetime: validParams.datetime }),
-        ...(validParams.wallpaper && { wallpaper: validParams.wallpaper }),
-        ...(validParams.avatar && { avatar: validParams.avatar }),
-      }));
-      
-      // Se tiver parâmetros, auto-gerar após carregar
       if (hasParams) {
+        setBannerConfig((prev) => ({
+          ...prev,
+          ...(validParams.name && { name: validParams.name }),
+          ...(validParams.speed && { speed: validParams.speed }),
+          ...(validParams.label && { label: validParams.label }),
+          ...(validParams.system && { system: validParams.system }),
+          ...(validParams.datetime && { datetime: validParams.datetime }),
+          ...(validParams.wallpaper && { wallpaper: validParams.wallpaper }),
+          ...(validParams.avatar && { avatar: validParams.avatar }),
+        }));
+        
+        // Se tiver parâmetros, auto-gerar após carregar
         console.log("Setting autoGenerate to true");
         setAutoGenerate(true);
       }

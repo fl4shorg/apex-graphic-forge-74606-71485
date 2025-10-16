@@ -37,11 +37,24 @@ export const PreviewPanel = ({
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.onload = () => {
+        console.log("Wallpaper carregado com sucesso");
         setWallpaperImg(img);
       };
-      img.onerror = () => {
-        console.error("Erro ao carregar wallpaper:", config.wallpaper);
-        setWallpaperImg(null);
+      img.onerror = (e) => {
+        console.error("Erro ao carregar wallpaper:", config.wallpaper, e);
+        // Tenta com proxy CORS
+        const corsProxy = `https://corsproxy.io/?${encodeURIComponent(config.wallpaper)}`;
+        const imgRetry = new Image();
+        imgRetry.crossOrigin = "anonymous";
+        imgRetry.onload = () => {
+          console.log("Wallpaper carregado com proxy CORS");
+          setWallpaperImg(imgRetry);
+        };
+        imgRetry.onerror = () => {
+          console.error("Falha total ao carregar wallpaper");
+          setWallpaperImg(null);
+        };
+        imgRetry.src = corsProxy;
       };
       img.src = config.wallpaper;
     } else {
@@ -54,11 +67,24 @@ export const PreviewPanel = ({
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.onload = () => {
+        console.log("Avatar carregado com sucesso");
         setAvatarImg(img);
       };
-      img.onerror = () => {
-        console.error("Erro ao carregar avatar:", config.avatar);
-        setAvatarImg(null);
+      img.onerror = (e) => {
+        console.error("Erro ao carregar avatar:", config.avatar, e);
+        // Tenta com proxy CORS
+        const corsProxy = `https://corsproxy.io/?${encodeURIComponent(config.avatar)}`;
+        const imgRetry = new Image();
+        imgRetry.crossOrigin = "anonymous";
+        imgRetry.onload = () => {
+          console.log("Avatar carregado com proxy CORS");
+          setAvatarImg(imgRetry);
+        };
+        imgRetry.onerror = () => {
+          console.error("Falha total ao carregar avatar");
+          setAvatarImg(null);
+        };
+        imgRetry.src = corsProxy;
       };
       img.src = config.avatar;
     } else {
@@ -1042,12 +1068,14 @@ export const PreviewPanel = ({
         const result = await response.json();
         setCatboxUrl(result.url);
         
-        // Verifica se deve retornar JSON
+        // Verifica se tem parâmetros na URL (se tiver, retorna JSON)
         const hash = window.location.hash;
         const searchParams = new URLSearchParams(hash.includes('?') ? hash.split('?')[1] : '');
-        const returnJson = searchParams.get("json") === "true";
+        const hasUrlParams = Array.from(searchParams.keys()).some(key => 
+          ['name', 'speed', 'label', 'system', 'datetime', 'wallpaper', 'avatar'].includes(key)
+        );
         
-        if (returnJson) {
+        if (hasUrlParams) {
           // Exibe resultado em JSON na página
           const jsonResult = {
             success: true,
@@ -1062,7 +1090,7 @@ export const PreviewPanel = ({
             }
           };
           console.log("JSON Result:", jsonResult);
-          document.body.innerHTML = `<pre style="color: white; font-family: monospace; padding: 20px;">${JSON.stringify(jsonResult, null, 2)}</pre>`;
+          document.body.innerHTML = `<pre style="color: white; font-family: monospace; padding: 20px; background: #000;">${JSON.stringify(jsonResult, null, 2)}</pre>`;
         } else {
           toast.success("Banner enviado com sucesso!");
         }

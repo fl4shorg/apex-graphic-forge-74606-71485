@@ -26,8 +26,14 @@ https://seusite.com/#/
 
 ### URL com Parâmetros (Geração Automática + JSON)
 ```
-https://seusite.com/#/?name=NEEXT&speed=999&label=VELOCIDADE&json=true
+https://seusite.com/#/?name=NEEXT&speed=999&label=VELOCIDADE
 ```
+
+**IMPORTANTE:** Quando você passa qualquer parâmetro na URL, o site automaticamente:
+1. Carrega os valores
+2. Gera o banner
+3. Faz upload para Catbox
+4. Retorna o resultado em JSON
 
 ### Parâmetros Disponíveis
 - `name` - Nome a exibir (ex: NEEXT)
@@ -35,9 +41,8 @@ https://seusite.com/#/?name=NEEXT&speed=999&label=VELOCIDADE&json=true
 - `label` - Rótulo inferior (ex: VELOCIDADE)
 - `system` - Nome do sistema (ex: WINDOWS 11)
 - `datetime` - Data e hora customizada (ex: 16/10/2025 - 16:47)
-- `wallpaper` - URL da imagem de fundo
-- `avatar` - URL da foto de perfil
-- `json=true` - Retorna resultado em JSON (obrigatório para JSON response)
+- `wallpaper` - URL da imagem de fundo (com fallback CORS automático)
+- `avatar` - URL da foto de perfil (com fallback CORS automático)
 
 ### Exemplo de Resposta JSON
 ```json
