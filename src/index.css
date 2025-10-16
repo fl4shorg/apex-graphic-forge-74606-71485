@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 225 20% 7%;
+    --foreground: 0 0% 100%;
+
+    --card: 225 18% 10%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 225 18% 10%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 185 100% 50%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 225 15% 15%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 225 15% 15%;
+    --muted-foreground: 210 20% 70%;
+
+    --accent: 185 100% 50%;
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 225 15% 20%;
+    --input: 225 15% 15%;
+    --ring: 185 100% 50%;
+
+    --radius: 0.75rem;
+
+    /* Neon colors */
+    --neon-cyan: 185 100% 50%;
+    --neon-purple: 280 100% 50%;
+    --neon-pink: 320 100% 50%;
+    --neon-green: 160 100% 50%;
+    
+    /* Backgrounds */
+    --bg-primary: 225 20% 7%;
+    --bg-secondary: 225 18% 10%;
+    --bg-tertiary: 225 15% 15%;
+    
+    /* Text colors */
+    --text-primary: 0 0% 100%;
+    --text-secondary: 210 20% 70%;
+    --text-muted: 210 15% 50%;
+    
+    /* Glows */
+    --glow-cyan: 0 0 10px hsl(185 100% 50% / 0.7), 0 0 20px hsl(185 100% 50% / 0.5);
+    --glow-purple: 0 0 10px hsl(280 100% 50% / 0.7), 0 0 20px hsl(280 100% 50% / 0.5);
+    
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', 'Montserrat', sans-serif;
+  }
+  
+  @font-face {
+    font-family: 'Orbitron';
+    font-style: normal;
+    font-weight: 400 900;
+    font-display: swap;
+    src: url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap');
+  }
+}
+
+@layer utilities {
+  .glow-cyan {
+    box-shadow: var(--glow-cyan);
+  }
+  
+  .glow-purple {
+    box-shadow: var(--glow-purple);
+  }
+  
+  .text-glow-cyan {
+    text-shadow: 0 0 10px hsl(185 100% 50% / 0.8), 0 0 20px hsl(185 100% 50% / 0.5);
+  }
+  
+  .text-glow-purple {
+    text-shadow: 0 0 10px hsl(280 100% 50% / 0.8), 0 0 20px hsl(280 100% 50% / 0.5);
+  }
+  
+  .orbitron {
+    font-family: 'Orbitron', sans-serif;
+  }
+  
+  .grid-tech {
+    background-image: 
+      linear-gradient(hsl(185 100% 50% / 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(185 100% 50% / 0.1) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
