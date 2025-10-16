@@ -38,12 +38,14 @@ export const PreviewPanel = ({
       img.crossOrigin = "anonymous";
       img.onload = () => {
         setWallpaperImg(img);
-        checkImagesLoaded();
+      };
+      img.onerror = () => {
+        console.error("Erro ao carregar wallpaper:", config.wallpaper);
+        setWallpaperImg(null);
       };
       img.src = config.wallpaper;
     } else {
       setWallpaperImg(null);
-      checkImagesLoaded();
     }
   }, [config.wallpaper]);
 
@@ -53,18 +55,22 @@ export const PreviewPanel = ({
       img.crossOrigin = "anonymous";
       img.onload = () => {
         setAvatarImg(img);
-        checkImagesLoaded();
+      };
+      img.onerror = () => {
+        console.error("Erro ao carregar avatar:", config.avatar);
+        setAvatarImg(null);
       };
       img.src = config.avatar;
     } else {
       setAvatarImg(null);
-      checkImagesLoaded();
     }
   }, [config.avatar]);
 
-  const checkImagesLoaded = () => {
-    setImagesLoaded(true);
-  };
+  useEffect(() => {
+    const wallpaperReady = !config.wallpaper || wallpaperImg !== null;
+    const avatarReady = !config.avatar || avatarImg !== null;
+    setImagesLoaded(wallpaperReady && avatarReady);
+  }, [config.wallpaper, config.avatar, wallpaperImg, avatarImg]);
 
   useEffect(() => {
     drawCanvas();
