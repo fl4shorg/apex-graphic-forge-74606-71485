@@ -1031,21 +1031,40 @@ export const PreviewPanel = ({
       });
 
       const formData = new FormData();
-      formData.append("banner", blob, "neext-banner.png");
+      formData.append("file", blob, "neext-banner.png");
 
-      const response = await fetch("/api/upload-banner", {
+      const response = await fetch("https://www.api.neext.online/upload/catbox", {
         method: "POST",
         body: formData,
       });
 
       if (response.ok) {
         const result = await response.json();
-        if (result.success) {
-          setCatboxUrl(result.url);
-          toast.success("Banner enviado com sucesso!");
-          console.log("Resposta da API:", result);
+        setCatboxUrl(result.url);
+        
+        // Verifica se deve retornar JSON
+        const hash = window.location.hash;
+        const searchParams = new URLSearchParams(hash.includes('?') ? hash.split('?')[1] : '');
+        const returnJson = searchParams.get("json") === "true";
+        
+        if (returnJson) {
+          // Exibe resultado em JSON na página
+          const jsonResult = {
+            success: true,
+            url: result.url,
+            timestamp: new Date().toISOString(),
+            config: {
+              name: config.name,
+              speed: config.speed,
+              label: config.label,
+              system: config.system,
+              datetime: config.datetime,
+            }
+          };
+          console.log("JSON Result:", jsonResult);
+          document.body.innerHTML = `<pre style="color: white; font-family: monospace; padding: 20px;">${JSON.stringify(jsonResult, null, 2)}</pre>`;
         } else {
-          toast.error(result.error || "Erro ao enviar banner");
+          toast.success("Banner enviado com sucesso!");
         }
       } else {
         toast.error("Erro ao enviar banner");
