@@ -933,11 +933,11 @@ export const PreviewPanel = ({
       // Measure text to position icon correctly
       ctx.font = "600 22px Orbitron, sans-serif";
       const systemTextWidth = ctx.measureText(system).width;
-      const iconX = centerX - systemTextWidth / 2 - 22;
+      const iconX = centerX - systemTextWidth / 2 - 38;
       
       // Computer/Monitor icon - well aligned
       ctx.save();
-      ctx.translate(iconX, systemY - 8);
+      ctx.translate(iconX, systemY);
       ctx.strokeStyle = "#00f7ff";
       ctx.lineWidth = 2;
       ctx.shadowColor = "#00f7ff";
