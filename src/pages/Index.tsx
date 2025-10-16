@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { Header } from "@/components/banner/Header";
 import { ControlPanel } from "@/components/banner/ControlPanel";
@@ -18,7 +17,6 @@ const urlParamsSchema = z.object({
 });
 
 const Index = () => {
-  const [searchParams] = useSearchParams();
   const [bannerConfig, setBannerConfig] = useState({
     name: "NEEXT",
     speed: "999",
@@ -35,6 +33,10 @@ const Index = () => {
 
   // Carregar parâmetros da URL ao montar o componente
   useEffect(() => {
+    // Ler parâmetros do hash para funcionar com HashRouter
+    const hash = window.location.hash;
+    const searchParams = new URLSearchParams(hash.includes('?') ? hash.split('?')[1] : '');
+    
     const params = {
       name: searchParams.get("name"),
       speed: searchParams.get("speed"),
@@ -75,7 +77,7 @@ const Index = () => {
     } else {
       console.error("Validation error:", validation.error);
     }
-  }, [searchParams]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
