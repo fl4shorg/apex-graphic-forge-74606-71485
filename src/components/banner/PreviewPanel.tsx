@@ -285,7 +285,7 @@ export const PreviewPanel = ({
     ctx.fillStyle = "#00f7ff";
     ctx.shadowColor = "#00f7ff";
     ctx.shadowBlur = 5;
-    ctx.fillText(config.name.toUpperCase() || "NEON", leftPanelX + 120, leftPanelY + 35);
+    ctx.fillText(config.name.toUpperCase() || "NEEXT", leftPanelX + 120, leftPanelY + 35);
     ctx.shadowBlur = 0;
     
     // Info lines with icons
@@ -994,7 +994,7 @@ export const PreviewPanel = ({
       });
 
       const formData = new FormData();
-      formData.append("file", blob, "neon-banner.png");
+      formData.append("file", blob, "neext-banner.png");
 
       const response = await fetch("https://www.api.neext.online/upload/catbox", {
         method: "POST",
@@ -1023,7 +1023,7 @@ export const PreviewPanel = ({
     const dataURL = canvas.toDataURL("image/png");
     const a = document.createElement("a");
     a.href = dataURL;
-    a.download = (config.name || "neon-banner") + ".png";
+    a.download = (config.name || "neext-banner") + ".png";
     a.click();
     toast.success("Banner baixado!");
   };

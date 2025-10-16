@@ -6,7 +6,7 @@ import { TechBackground } from "@/components/banner/TechBackground";
 
 const Index = () => {
   const [bannerConfig, setBannerConfig] = useState({
-    name: "NEON",
+    name: "NEEXT",
     speed: "999",
     label: "VELOCIDADE",
     system: "",

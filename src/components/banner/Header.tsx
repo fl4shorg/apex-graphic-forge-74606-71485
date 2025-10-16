@@ -12,7 +12,7 @@ export const Header = () => {
             </div>
             <div className="flex items-center gap-3">
               <h1 className="text-xl md:text-2xl font-black orbitron bg-gradient-to-r from-[hsl(var(--neon-cyan))] via-[hsl(var(--neon-purple))] to-[hsl(var(--neon-pink))] bg-clip-text text-transparent">
-                NEON BANNER GENERATOR
+                NEEXT BANNER GENERATOR
               </h1>
               <span className="hidden sm:inline-block px-3 py-1 text-xs font-bold orbitron bg-gradient-to-r from-[hsl(var(--neon-cyan))] to-[hsl(var(--neon-purple))] text-black rounded-full glow-cyan">
                 PREMIUM PRO
