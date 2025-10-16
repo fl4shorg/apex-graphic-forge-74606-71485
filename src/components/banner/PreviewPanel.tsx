@@ -1031,17 +1031,22 @@ export const PreviewPanel = ({
       });
 
       const formData = new FormData();
-      formData.append("file", blob, "neext-banner.png");
+      formData.append("banner", blob, "neext-banner.png");
 
-      const response = await fetch("https://www.api.neext.online/upload/catbox", {
+      const response = await fetch("/api/upload-banner", {
         method: "POST",
         body: formData,
       });
 
       if (response.ok) {
         const result = await response.json();
-        setCatboxUrl(result.url);
-        toast.success("Banner enviado com sucesso!");
+        if (result.success) {
+          setCatboxUrl(result.url);
+          toast.success("Banner enviado com sucesso!");
+          console.log("Resposta da API:", result);
+        } else {
+          toast.error(result.error || "Erro ao enviar banner");
+        }
       } else {
         toast.error("Erro ao enviar banner");
       }
