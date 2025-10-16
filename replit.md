@@ -11,11 +11,13 @@ Aplicação web para gerar banners personalizados com design futurista e tech. O
 - Download do banner em PNG
 - Upload automático para Catbox
 
-### 2. Modo JSON (API-like)
-Quando você adiciona `json=true` nos parâmetros da URL, o site:
-- Gera o banner automaticamente
-- Faz upload para o Catbox
-- Retorna o resultado em formato JSON puro
+### 2. API REST (GET /api/banner)
+**Nova funcionalidade para deploy no Render!**
+- Endpoint GET que aceita parâmetros pela URL
+- Gera banner automaticamente usando Satori
+- Faz upload para Catbox
+- Retorna link da imagem em JSON
+- Pronto para rodar em produção no Render
 
 ## Como Usar
 
@@ -149,6 +151,13 @@ npm run build
 - Geração de imagens com Satori (JSX → SVG → PNG via Resvg)
 - Upload automático para Catbox via node-catbox
 - Proxy configurado no Vite para /api → http://localhost:3001
+
+### API REST para Deploy no Render
+- Criado endpoint GET /api/banner com parâmetros via query string
+- Servidor usa process.env.PORT para compatibilidade com Render
+- Arquivo render.yaml configurado para deploy automático
+- API_README.md com documentação completa e exemplos de uso
+- Comando de start otimizado: `cd server && node index.js`
 
 ### Segurança
 - **HTTPS obrigatório**: Apenas URLs HTTPS são aceitas
