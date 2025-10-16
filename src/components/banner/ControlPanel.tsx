@@ -1,4 +1,4 @@
-import { Settings, Image, Type, Clock, Download, Upload } from "lucide-react";
+import { Settings, Image, Type, Clock, Download, Upload, Copy, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -181,16 +181,51 @@ export const ControlPanel = ({
 
           {/* Catbox Download */}
           {catboxUrl && (
-            <div className="p-4 rounded-xl bg-gradient-to-r from-[hsl(var(--neon-cyan))]/10 to-[hsl(var(--neon-purple))]/10 border border-[hsl(var(--neon-cyan))]/30">
-              <Button
-                asChild
-                className="w-full bg-gradient-to-r from-[hsl(var(--neon-cyan))] to-[hsl(var(--neon-purple))] text-black font-bold orbitron hover:opacity-90 glow-cyan"
-              >
-                <a href={catboxUrl} target="_blank" rel="noopener noreferrer">
-                  <Download className="w-4 h-4 mr-2" />
-                  BAIXAR DO CATBOX
-                </a>
-              </Button>
+            <div className="space-y-3 p-4 rounded-xl bg-gradient-to-r from-[hsl(var(--neon-cyan))]/10 to-[hsl(var(--neon-purple))]/10 border border-[hsl(var(--neon-cyan))]/30">
+              <div>
+                <Label htmlFor="catbox-url" className="text-xs text-muted-foreground mb-2 block">
+                  Link do Catbox
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="catbox-url"
+                    value={catboxUrl}
+                    readOnly
+                    className="font-mono text-xs"
+                  />
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    onClick={() => {
+                      navigator.clipboard.writeText(catboxUrl);
+                    }}
+                    className="shrink-0"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  asChild
+                  className="flex-1 bg-gradient-to-r from-[hsl(var(--neon-cyan))] to-[hsl(var(--neon-purple))] text-black font-bold orbitron hover:opacity-90 glow-cyan"
+                >
+                  <a href={catboxUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    ABRIR
+                  </a>
+                </Button>
+                <Button
+                  asChild
+                  variant="secondary"
+                  className="flex-1 font-bold orbitron border border-[hsl(var(--neon-cyan))]/30"
+                >
+                  <a href={catboxUrl} download>
+                    <Download className="w-4 h-4 mr-2" />
+                    BAIXAR
+                  </a>
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
