@@ -1,0 +1,144 @@
+# NEEXT Banner Generator
+
+## Visão Geral
+Aplicação web para gerar banners personalizados com design futurista e tech. O site permite criar banners com informações customizadas e fazer upload automático para o Catbox.
+
+## Funcionalidades Principais
+
+### 1. Interface Web (Normal)
+- Gerar banners personalizados com nome, velocidade, rótulo, sistema
+- Upload de wallpaper e avatar customizados
+- Download do banner em PNG
+- Upload automático para Catbox
+
+### 2. Modo JSON (API-like)
+Quando você adiciona `json=true` nos parâmetros da URL, o site:
+- Gera o banner automaticamente
+- Faz upload para o Catbox
+- Retorna o resultado em formato JSON puro
+
+## Como Usar
+
+### URL Normal (Interface Visual)
+```
+https://seusite.com/#/
+```
+
+### URL com Parâmetros (Geração Automática + JSON)
+```
+https://seusite.com/#/?name=NEEXT&speed=999&label=VELOCIDADE&json=true
+```
+
+### Parâmetros Disponíveis
+- `name` - Nome a exibir (ex: NEEXT)
+- `speed` - Velocidade (ex: 999)
+- `label` - Rótulo inferior (ex: VELOCIDADE)
+- `system` - Nome do sistema (ex: WINDOWS 11)
+- `datetime` - Data e hora customizada (ex: 16/10/2025 - 16:47)
+- `wallpaper` - URL da imagem de fundo
+- `avatar` - URL da foto de perfil
+- `json=true` - Retorna resultado em JSON (obrigatório para JSON response)
+
+### Exemplo de Resposta JSON
+```json
+{
+  "success": true,
+  "url": "https://files.catbox.moe/xxxxx.png",
+  "timestamp": "2025-10-16T16:47:00.000Z",
+  "config": {
+    "name": "NEEXT",
+    "speed": "999",
+    "label": "VELOCIDADE",
+    "system": "",
+    "datetime": ""
+  }
+}
+```
+
+## Arquitetura
+
+### Frontend (React + Vite)
+- **Tecnologias**: React, TypeScript, Tailwind CSS, Shadcn/ui
+- **Canvas**: Geração de banner usando HTML5 Canvas
+- **Upload**: Fetch API para enviar para Catbox via API NEEXT
+
+### Estrutura de Arquivos
+```
+src/
+├── components/
+│   ├── banner/
+│   │   ├── ControlPanel.tsx    # Controles do banner
+│   │   ├── PreviewPanel.tsx    # Preview e geração
+│   │   ├── Header.tsx          # Cabeçalho
+│   │   └── TechBackground.tsx  # Fundo animado
+│   └── ui/                     # Componentes Shadcn/ui
+├── pages/
+│   └── Index.tsx               # Página principal
+└── main.tsx                    # Entry point
+
+api-vercel/                     # Deploy Vercel (opcional)
+├── api/
+│   └── generate.js             # Endpoint de informação
+├── vercel.json                 # Config Vercel
+└── README.md                   # Documentação Vercel
+```
+
+## Deploy na Vercel
+
+### Opção 1: Site Principal
+1. Conecte este repositório na Vercel
+2. Build Command: `npm run build`
+3. Output Directory: `dist`
+4. Framework Preset: Vite
+
+### Opção 2: API Vercel (pasta api-vercel)
+1. Crie um novo projeto na Vercel
+2. Aponte para a pasta `api-vercel`
+3. A Vercel detecta automaticamente a configuração
+
+## Desenvolvimento
+
+### Instalar Dependências
+```bash
+npm install
+```
+
+### Rodar Localmente
+```bash
+npm run start
+```
+
+### Build para Produção
+```bash
+npm run build
+```
+
+## Tecnologias Utilizadas
+- React 18
+- TypeScript
+- Vite
+- Tailwind CSS
+- Shadcn/ui
+- Radix UI
+- React Router DOM
+- Zod (validação)
+- Sonner (toasts)
+- Lucide React (ícones)
+
+## Configurações Importantes
+
+### Vite Config
+- Host: 0.0.0.0 (permite acesso externo)
+- Port: 5000
+- AllowedHosts: true (necessário para Replit)
+
+### Upload para Catbox
+- Endpoint: `https://www.api.neext.online/upload/catbox`
+- Método: POST
+- FormData: campo "file" com a imagem PNG
+
+## Mudanças Recentes (16/10/2025)
+- Removida API backend em Node.js (tudo funciona no frontend agora)
+- Adicionado modo JSON para respostas automáticas
+- Criada versão para deploy na Vercel
+- Limpeza de dependências desnecessárias (canvas, express, etc)
