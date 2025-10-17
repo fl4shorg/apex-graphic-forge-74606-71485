@@ -112,10 +112,10 @@ async function drawBanner(config) {
   const now = new Date();
   const dateText = config.datetime?.trim() 
     ? config.datetime.split(" - ")[0] 
-    : now.toLocaleDateString("pt-BR");
+    : now.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
   const timeText = config.datetime?.trim() 
     ? config.datetime.split(" - ")[1] 
-    : now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    : now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
 
   // LEFT TOP: Date with calendar icon
   ctx.save();
