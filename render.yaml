@@ -3,10 +3,8 @@ services:
     name: neext-banner-api
     runtime: node
     rootDir: api
-    buildCommand: npm install && apt-get update && apt-get install -y fontconfig
+    buildCommand: npm install
     startCommand: node banner.js
     envVars:
       - key: NODE_ENV
         value: production
-      - key: NODE_VERSION
-        value: 20
