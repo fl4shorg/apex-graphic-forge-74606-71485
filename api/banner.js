@@ -22,6 +22,8 @@ const isValidImageUrl = (url) => {
     return false;
   }
 };
+
+async function drawBanner(config) {
   const W = 1365;
   const H = 618;
   const canvas = createCanvas(W, H);
