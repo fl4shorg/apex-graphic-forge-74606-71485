@@ -1,14 +1,11 @@
 import express from 'express';
 import cors from 'cors';
-import PImage from 'pureimage';
-import { writeFileSync, unlinkSync, createWriteStream } from 'fs';
+import { createCanvas, loadImage, registerFont } from 'canvas';
+import { writeFileSync, unlinkSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { Catbox } from 'node-catbox';
 import { v4 as uuidv4 } from 'uuid';
-import https from 'https';
-import http from 'http';
-import { Writable, PassThrough } from 'stream';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -19,52 +16,12 @@ app.use(express.json({ limit: '50mb' }));
 
 const PORT = process.env.PORT || 3001;
 
-// Pureimage usa fonte bitmap padrão (Source Sans Pro está integrada)
-console.log('✅ Usando fonte padrão do pureimage (sans-serif)');
-
-// Polyfill para roundRect (pureimage não tem nativamente)
-function addRoundRect(ctx) {
-  if (!ctx.roundRect) {
-    ctx.roundRect = function(x, y, width, height, radius) {
-      if (width < 2 * radius) radius = width / 2;
-      if (height < 2 * radius) radius = height / 2;
-      this.beginPath();
-      this.moveTo(x + radius, y);
-      this.arcTo(x + width, y, x + width, y + height, radius);
-      this.arcTo(x + width, y + height, x, y + height, radius);
-      this.arcTo(x, y + height, x, y, radius);
-      this.arcTo(x, y, x + width, y, radius);
-      this.closePath();
-      return this;
-    };
-  }
-}
-
-// Função helper para carregar imagens via HTTP/HTTPS
-async function loadImageFromUrl(url) {
-  return new Promise((resolve, reject) => {
-    const client = url.startsWith('https') ? https : http;
-    client.get(url, (response) => {
-      const chunks = [];
-      response.on('data', (chunk) => chunks.push(chunk));
-      response.on('end', async () => {
-        try {
-          const buffer = Buffer.concat(chunks);
-          const isPng = buffer[0] === 0x89 && buffer[1] === 0x50;
-          const bufferStream = new PassThrough();
-          bufferStream.end(buffer);
-          
-          const img = isPng 
-            ? await PImage.decodePNGFromStream(bufferStream)
-            : await PImage.decodeJPEGFromStream(bufferStream);
-          resolve(img);
-        } catch (err) {
-          reject(err);
-        }
-      });
-      response.on('error', reject);
-    }).on('error', reject);
-  });
+// Registrar fonte Orbitron
+try {
+  registerFont(join(__dirname, 'fonts', 'Orbitron-Bold.ttf'), { family: 'Orbitron' });
+  console.log('✅ Fonte Orbitron carregada com sucesso');
+} catch (e) {
+  console.warn('Não foi possível carregar a fonte Orbitron, usando sans-serif');
 }
 
 const isValidImageUrl = (url) => {
@@ -81,11 +38,8 @@ const isValidImageUrl = (url) => {
 async function drawBanner(config) {
   const W = 1365;
   const H = 618;
-  const img = PImage.make(W, H);
-  const ctx = img.getContext('2d');
-  
-  // Adicionar polyfill para roundRect
-  addRoundRect(ctx);
+  const canvas = createCanvas(W, H);
+  const ctx = canvas.getContext('2d');
 
   // Load images if provided
   let wallpaperImg = null;
@@ -93,7 +47,7 @@ async function drawBanner(config) {
 
   try {
     if (config.wallpaper) {
-      wallpaperImg = await loadImageFromUrl(config.wallpaper);
+      wallpaperImg = await loadImage(config.wallpaper);
     }
   } catch (e) {
     console.error('Erro ao carregar wallpaper:', e.message);
@@ -101,7 +55,7 @@ async function drawBanner(config) {
 
   try {
     if (config.avatar) {
-      avatarImg = await loadImageFromUrl(config.avatar);
+      avatarImg = await loadImage(config.avatar);
     }
   } catch (e) {
     console.error('Erro ao carregar avatar:', e.message);
@@ -924,26 +878,7 @@ async function drawBanner(config) {
     ctx.shadowBlur = 0;
   }
 
-  // Converter para buffer PNG usando pureimage
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-    const writable = new Writable({
-      write(chunk, encoding, callback) {
-        chunks.push(chunk);
-        callback();
-      }
-    });
-    
-    writable.on('finish', () => {
-      resolve(Buffer.concat(chunks));
-    });
-    
-    writable.on('error', reject);
-    
-    PImage.encodePNGToStream(img, writable)
-      .then(() => writable.end())
-      .catch(reject);
-  });
+  return canvas.toBuffer('image/png');
 }
 
 app.post('/api/generate', async (req, res) => {
