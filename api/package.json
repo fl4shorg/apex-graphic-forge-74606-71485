@@ -8,7 +8,9 @@
     "start": "node banner.js"
   },
   "dependencies": {
-    "@napi-rs/canvas": "^0.1.58"
+    "@napi-rs/canvas": "^0.1.58",
+    "express": "^5.1.0",
+    "cors": "^2.8.5"
   },
   "engines": {
     "node": ">=18.0.0"

@@ -1,91 +1,144 @@
-# Deploy da API de Banner no Render
+# 🚀 Deploy da API NEEXT Banner no Render
 
-## 🚀 Como fazer deploy no Render
+## ✅ STATUS: Código pronto para deploy!
 
-### 1. Preparar o repositório
-O código já está pronto! A pasta `api/` contém tudo que você precisa.
+A API está **100% funcional** com visual idêntico ao preview usando @napi-rs/canvas.
 
-### 2. Criar conta no Render
-- Acesse: https://render.com
-- Crie uma conta (pode usar GitHub)
+---
 
-### 3. Criar novo Web Service
+## 📋 CONFIGURAÇÃO DO RENDER (PASSO A PASSO)
+
+### 1. Criar conta no Render
+- Acesse: **https://render.com**
+- Crie conta com GitHub (recomendado)
+
+### 2. Criar Web Service
 1. Clique em **"New +"** → **"Web Service"**
 2. Conecte seu repositório GitHub
-3. Configure assim:
+3. Configure **EXATAMENTE** assim:
 
 ```
-Name: neext-banner-api
-Region: escolha a mais próxima
-Branch: main (ou seu branch principal)
-Root Directory: api
-Runtime: Node
-Build Command: npm install
-Start Command: node banner.js
-Instance Type: Free (ou pago se preferir)
+✅ Name: neext-banner-api
+✅ Region: Oregon (US West) ou Frankfurt (EU)
+✅ Branch: main
+✅ Root Directory: api
+✅ Runtime: Node
+✅ Build Command: npm install
+✅ Start Command: node banner.js
+✅ Instance Type: Free (ou Starter $7/mês para produção)
+✅ Auto-Deploy: Yes
 ```
 
-### 4. Variáveis de Ambiente (opcional)
-No Render, adicione se necessário:
+### 3. Environment Variables (Opcional)
+Adicione se quiser:
 ```
-NODE_ENV=production
+NODE_ENV = production
 ```
 
-### 5. Deploy Automático
+### 4. Deploy!
 - Clique em **"Create Web Service"**
-- O Render vai fazer deploy automaticamente
-- Aguarde 2-5 minutos
+- Aguarde 3-5 minutos
 
-### 6. Sua API estará pronta!
-URL final será algo como:
+---
+
+## 🎯 COMO USAR A API
+
+### URL Base:
 ```
-https://neext-banner-api.onrender.com/api/banner
+https://neext-banner-api.onrender.com
 ```
 
-## 📝 Como usar a API
-
-### Exemplo de URL:
+### Endpoint da API:
 ```
-https://sua-api.onrender.com/api/banner?name=TESTE&speed=999&label=VELOCIDADE&system=WINDOWS%2011&wallpaper=https://i.ibb.co/N2qWPxb7/88dfe41c43186feb6baaf7b8b47cea85.jpg&avatar=https://i.ibb.co/ZbrBcQF/156afca4bf32bfe0135da6ec1529817b.jpg
+GET /api/banner
+```
+
+### Exemplo completo:
+```
+https://neext-banner-api.onrender.com/api/banner?name=NEEXT&speed=999&label=VELOCIDADE&system=WINDOWS%2011&wallpaper=https://i.ibb.co/N2qWPxb7/88dfe41c43186feb6baaf7b8b47cea85.jpg&avatar=https://i.ibb.co/ZbrBcQF/156afca4bf32bfe0135da6ec1529817b.jpg
 ```
 
 ### Parâmetros disponíveis:
-- `name` - Nome a exibir (ex: NEEXT)
-- `speed` - Velocidade (ex: 999)
-- `label` - Rótulo inferior (ex: VELOCIDADE)
-- `system` - Nome do sistema (ex: WINDOWS 11)
-- `datetime` - Data e hora (ex: 17/10/2025 - 14:30)
-- `wallpaper` - URL da imagem de fundo
-- `avatar` - URL da foto de perfil
 
-## ✨ Diferenças importantes do Vercel
+| Parâmetro | Descrição | Exemplo |
+|-----------|-----------|---------|
+| `name` | Nome do usuário | `NEEXT` |
+| `speed` | Velocidade | `999` |
+| `label` | Rótulo inferior | `VELOCIDADE` |
+| `system` | Sistema operacional | `WINDOWS 11` |
+| `datetime` | Data e hora | `17/10/2025 - 14:30` |
+| `wallpaper` | URL da imagem de fundo | `https://...` |
+| `avatar` | URL do avatar | `https://...` |
 
-### ✅ FUNCIONA no Render:
-- @napi-rs/canvas (binários nativos)
-- Fontes customizadas (Orbitron)
-- Geração de imagens complexas
-- Visual 100% idêntico ao preview
+---
 
-### ❌ NÃO funciona no Vercel:
-- @napi-rs/canvas (limitação serverless)
-- Fontes podem não carregar corretamente
+## ⚠️ IMPORTANTE - Plano Free do Render
 
-## 🔧 Troubleshooting
+### Características do Free Tier:
+- ✅ **Grátis para sempre**
+- ⚠️ **Dorme após 15 minutos de inatividade**
+- ⏱️ **Primeira requisição demora 30-60 segundos** (para acordar)
+- ✅ Depois funciona normalmente
 
-### Se a fonte não carregar:
-1. Verifique se a pasta `api/fonts/` tem o arquivo `Orbitron-Bold.ttf`
-2. No Render, veja os logs em **"Logs"** para conferir se aparece "✅ Fonte Orbitron carregada"
+### Quando usar Plano Pago ($7/mês):
+- ✅ API sempre ativa (sem delay)
+- ✅ Mais memória RAM
+- ✅ Melhor para produção
 
-### Se der erro de memória:
-- Upgrade para um plano pago no Render (Free tem 512MB RAM)
+---
 
-## 🎯 Resultado Final
-Sua API vai retornar uma imagem PNG perfeita, **exatamente igual ao preview do site**, com todos os detalhes visuais:
-- Wallpaper de fundo
-- Avatar circular central e pequeno
-- Nome, velocidade e label
-- Todos os painéis laterais decorativos
-- Sistema operacional (se fornecido)
-- Data e hora
-- Ícone de robô
-- Efeitos visuais (sombras, gradientes, etc.)
+## 🔧 TROUBLESHOOTING
+
+### ❌ Erro: "Cannot find module"
+**Solução:** Verifique se `Root Directory` está com valor `api`
+
+### ❌ Erro: "Application exited early"
+**Solução:** Certifique-se que `Start Command` é `node banner.js`
+
+### ❌ API demora muito
+**Solução:** Plano Free dorme. Primeira requisição é lenta (normal)
+
+### ❌ Fonte não carrega
+**Solução:** Verifique nos logs do Render:
+- Deve aparecer: `✅ Fonte Orbitron carregada com sucesso`
+- Se não aparecer, verifique se a pasta `api/fonts/` tem `Orbitron-Bold.ttf`
+
+---
+
+## ✨ RESULTADO FINAL
+
+A API vai retornar uma **imagem PNG perfeita**, 100% idêntica ao preview:
+
+✅ Wallpaper de fundo com overlay  
+✅ Avatar circular central + pequeno no painel  
+✅ Nome, velocidade e label com fonte Orbitron  
+✅ Painéis decorativos (latência, upload, download, sistema)  
+✅ Data e hora com ícones  
+✅ Ícone de robô  
+✅ Sistema operacional com ícone de monitor  
+✅ Gradientes, sombras e efeitos visuais  
+
+---
+
+## 📝 COMMIT E PUSH
+
+Para fazer deploy, execute:
+
+```bash
+git add api/banner.js api/package.json render.yaml
+git commit -m "feat: API completa com servidor Express para Render"
+git push
+```
+
+O Render vai detectar o push e fazer deploy automaticamente!
+
+---
+
+## 🎉 PRONTO!
+
+Após o deploy, você terá uma API profissional rodando em:
+```
+https://sua-api.onrender.com/api/banner
+```
+
+Use em Discord bots, sites, aplicativos e muito mais!

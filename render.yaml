@@ -2,6 +2,7 @@ services:
   - type: web
     name: neext-banner-api
     runtime: node
+    rootDir: api
     buildCommand: npm install
     startCommand: node banner.js
     envVars:

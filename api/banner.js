@@ -1,6 +1,8 @@
 import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import express from 'express';
+import cors from 'cors';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -870,23 +872,13 @@ async function drawBanner(config) {
   return canvas.toBuffer('image/png');
 }
 
+const app = express();
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
 
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+const PORT = process.env.PORT || 3000;
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'GET') {
-    return res.status(405).json({ 
-      success: false, 
-      error: 'Método não permitido. Use GET.' 
-    });
-  }
-
+app.get('/api/banner', async (req, res) => {
   try {
     const { name, speed, label, system, datetime, wallpaper, avatar } = req.query;
 
@@ -916,7 +908,6 @@ export default async function handler(req, res) {
 
     const imageBuffer = await drawBanner(config);
     
-    // Retorna a imagem diretamente
     res.setHeader('Content-Type', 'image/png');
     res.setHeader('Content-Length', imageBuffer.length);
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
@@ -924,10 +915,33 @@ export default async function handler(req, res) {
     
     return res.status(200).send(imageBuffer);
   } catch (error) {
-    console.error('Erro:', error);
+    console.error('Erro ao gerar banner:', error);
     return res.status(500).json({
       success: false,
       error: error.message
     });
   }
-}
+});
+
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'NEEXT Banner API',
+    endpoint: '/api/banner',
+    parameters: {
+      name: 'Nome do usuário (ex: NEEXT)',
+      speed: 'Velocidade (ex: 999)',
+      label: 'Label (ex: VELOCIDADE)',
+      system: 'Sistema (ex: WINDOWS 11)',
+      datetime: 'Data e hora (ex: 17/10/2025 - 14:30)',
+      wallpaper: 'URL da imagem de fundo',
+      avatar: 'URL do avatar'
+    },
+    example: `/api/banner?name=TESTE&speed=999&label=VELOCIDADE&system=WINDOWS%2011`
+  });
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ API rodando em http://0.0.0.0:${PORT}`);
+  console.log(`✅ Endpoint: http://0.0.0.0:${PORT}/api/banner`);
+});
