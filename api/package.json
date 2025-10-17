@@ -2,9 +2,15 @@
   "name": "neext-banner-api",
   "version": "1.0.0",
   "type": "module",
+  "description": "API de geração de banners NEEXT com @napi-rs/canvas",
+  "main": "banner.js",
+  "scripts": {
+    "start": "node banner.js"
+  },
   "dependencies": {
-    "@napi-rs/canvas": "^0.1.58",
-    "@resvg/resvg-js": "^2.6.2",
-    "satori": "^0.18.3"
+    "@napi-rs/canvas": "^0.1.58"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
