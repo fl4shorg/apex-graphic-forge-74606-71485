@@ -1,10 +1,9 @@
 import express from 'express';
 import cors from 'cors';
-import { createCanvas, loadImage, registerFont } from 'canvas';
+import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
 import { writeFileSync, unlinkSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { Catbox } from 'node-catbox';
 import { v4 as uuidv4 } from 'uuid';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -18,7 +17,7 @@ const PORT = process.env.PORT || 3001;
 
 // Registrar fonte Orbitron
 try {
-  registerFont(join(__dirname, 'fonts', 'Orbitron-Bold.ttf'), { family: 'Orbitron' });
+  GlobalFonts.registerFromPath(join(__dirname, 'fonts', 'Orbitron-Bold.ttf'), 'Orbitron');
   console.log('✅ Fonte Orbitron carregada com sucesso');
 } catch (e) {
   console.warn('Não foi possível carregar a fonte Orbitron, usando sans-serif');

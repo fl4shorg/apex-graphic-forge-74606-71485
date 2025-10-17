@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "web"]
+modules = ["nodejs-20", "web", "bun"]
 [agent]
 expertMode = true
 
@@ -27,13 +27,13 @@ args = "Server"
 name = "Server"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm start"
-waitForPort = 5000
-
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bun run start"
+waitForPort = 5000
 
 [[ports]]
 localPort = 3000
@@ -46,10 +46,6 @@ externalPort = 3003
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 37535
-externalPort = 5173
 
 [[ports]]
 localPort = 38641
@@ -66,6 +62,10 @@ externalPort = 6000
 [[ports]]
 localPort = 44719
 externalPort = 3001
+
+[[ports]]
+localPort = 45029
+externalPort = 5173
 
 [[ports]]
 localPort = 46827

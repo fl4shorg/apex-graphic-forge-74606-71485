@@ -11,6 +11,9 @@ export default defineConfig(({ mode }) => ({
     strictPort: true,
     allowedHosts: true,
     hmr: false,
+    watch: {
+      ignored: ['**/node_modules/**', '**/.cache/**', '**/dist/**']
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
