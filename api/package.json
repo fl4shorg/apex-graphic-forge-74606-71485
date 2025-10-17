@@ -1,0 +1,10 @@
+{
+  "name": "neext-banner-api",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.58",
+    "node-catbox": "^3.4.0",
+    "uuid": "^13.0.0"
+  }
+}
