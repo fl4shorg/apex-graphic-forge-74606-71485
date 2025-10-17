@@ -7,9 +7,10 @@ const __dirname = dirname(__filename);
 
 // Registrar fonte Orbitron
 try {
-  GlobalFonts.registerFromPath(join(__dirname, '..', 'server', 'fonts', 'Orbitron-Bold.ttf'), 'Orbitron');
+  GlobalFonts.registerFromPath(join(__dirname, 'fonts', 'Orbitron-Bold.ttf'), 'Orbitron');
+  console.log('✅ Fonte Orbitron carregada com sucesso');
 } catch (e) {
-  console.warn('Fonte Orbitron não encontrada');
+  console.error('❌ Erro ao carregar fonte Orbitron:', e.message);
 }
 
 const isValidImageUrl = (url) => {
