@@ -1,10 +1,11 @@
 services:
   - type: web
     name: neext-banner-api
-    runtime: node
-    rootDir: api
-    buildCommand: npm install
-    startCommand: node banner.js
+    runtime: docker
+    dockerfilePath: ./api/Dockerfile
+    dockerContext: ./api
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 3000
