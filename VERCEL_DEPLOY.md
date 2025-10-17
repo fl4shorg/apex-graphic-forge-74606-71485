@@ -12,12 +12,13 @@
 3. Selecione este repositório
 
 ### Passo 2: Configurar Build
-A Vercel detecta automaticamente as configurações do `vercel.json`, mas confirme:
 
-- **Framework Preset**: Vite
-- **Build Command**: `bun run build` (ou `npm run build`)
-- **Output Directory**: `dist`
-- **Install Command**: `bun install` (ou `npm install`)
+| Campo | Valor |
+|-------|-------|
+| **Framework Preset** | Vite |
+| **Build Command** | `npm run build` |
+| **Output Directory** | `dist` |
+| **Install Command** | `npm install` |
 
 ### Passo 3: Deploy
 1. Clique em **"Deploy"**
@@ -51,7 +52,7 @@ vercel --prod
 projeto/
 ├── api/
 │   ├── banner.js          # Serverless function para gerar banners
-│   ├── fonts/             # Fontes (copiadas de server/fonts)
+│   ├── fonts/             # Fontes (Orbitron, Inter, etc)
 │   └── package.json       # Dependências da API
 ├── dist/                  # Build do frontend (gerado automaticamente)
 ├── src/                   # Código fonte React
@@ -68,38 +69,63 @@ Após o deploy, você terá acesso a:
 https://seu-projeto.vercel.app/
 ```
 
-### API
+### API - Retorna Imagem PNG Diretamente
 ```
 https://seu-projeto.vercel.app/api/banner?name=TESTE&speed=999&label=VELOCIDADE
 ```
 
-## 🎯 Exemplos de Uso da API
+## 🎯 Como Usar a API
 
 ### Exemplo Básico
-```
-GET https://seu-projeto.vercel.app/api/banner?name=NEEXT&speed=999&label=VELOCIDADE
+A API retorna a **imagem PNG diretamente** (não é JSON):
+
+```html
+<!-- Use diretamente como src de imagem -->
+<img src="https://seu-projeto.vercel.app/api/banner?name=NEEXT&speed=999&label=VELOCIDADE" />
 ```
 
 ### Com Parâmetros Completos
 ```
-GET https://seu-projeto.vercel.app/api/banner?name=TESTE&speed=850&label=DOWNLOAD&system=WINDOWS 11&wallpaper=https://exemplo.com/bg.jpg&avatar=https://exemplo.com/avatar.png
+https://seu-projeto.vercel.app/api/banner?name=TESTE&speed=850&label=DOWNLOAD&system=WINDOWS 11&wallpaper=https://exemplo.com/bg.jpg&avatar=https://exemplo.com/avatar.png
 ```
 
-### Resposta JSON
-```json
-{
-  "success": true,
-  "url": "https://files.catbox.moe/xxxxx.png",
-  "timestamp": "2025-10-17T16:30:00.000Z",
-  "config": {
-    "name": "TESTE",
-    "speed": "999",
-    "label": "VELOCIDADE",
-    "system": "WINDOWS 11",
-    "datetime": ""
-  }
-}
+### Parâmetros Disponíveis
+
+| Parâmetro | Descrição | Exemplo |
+|-----------|-----------|---------|
+| `name` | Nome a exibir | NEEXT |
+| `speed` | Velocidade | 999 |
+| `label` | Rótulo inferior | VELOCIDADE |
+| `system` | Nome do sistema | WINDOWS 11 |
+| `datetime` | Data e hora customizada | 17/10/2025 - 13:30 |
+| `wallpaper` | URL da imagem de fundo (HTTPS) | https://exemplo.com/bg.jpg |
+| `avatar` | URL da foto de perfil (HTTPS) | https://exemplo.com/avatar.png |
+
+### Usando em HTML
+```html
+<img 
+  src="https://seu-projeto.vercel.app/api/banner?name=JOAO&speed=750&label=PING" 
+  alt="Banner personalizado"
+  width="1365"
+  height="618"
+/>
 ```
+
+### Usando em JavaScript
+```javascript
+// Baixar a imagem
+fetch('https://seu-projeto.vercel.app/api/banner?name=MARIA&speed=850')
+  .then(response => response.blob())
+  .then(blob => {
+    const url = URL.createObjectURL(blob);
+    const img = document.createElement('img');
+    img.src = url;
+    document.body.appendChild(img);
+  });
+```
+
+### Compartilhar/Download
+Os usuários podem simplesmente **clicar com botão direito > Salvar imagem** ou usar a URL diretamente em qualquer lugar que aceite imagens!
 
 ## ⚙️ Variáveis de Ambiente (Opcional)
 
@@ -123,6 +149,10 @@ Se precisar de variáveis de ambiente:
 - Verifique se a pasta `api/fonts/` tem o arquivo `Orbitron-Bold.ttf`
 - Execute: `cp -r server/fonts api/` localmente antes do commit
 
+### Imagem não carrega
+- Verifique se as URLs de wallpaper/avatar são HTTPS
+- Teste primeiro sem wallpaper/avatar personalizado
+
 ## 📱 Custom Domain
 
 Para adicionar um domínio personalizado:
@@ -135,6 +165,13 @@ Para adicionar um domínio personalizado:
 ## 🎉 Pronto!
 
 Seu NEEXT Banner Generator está no ar! 🚀
+
+### Vantagens desta Abordagem
+✅ Retorna imagem diretamente (sem dependências externas)  
+✅ Funciona como `<img src="..."/>`  
+✅ Cache automático da Vercel  
+✅ Sem necessidade de serviços externos  
+✅ Mais rápido e confiável  
 
 ### Links Úteis
 - [Documentação Vercel](https://vercel.com/docs)

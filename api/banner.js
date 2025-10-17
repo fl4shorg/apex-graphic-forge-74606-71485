@@ -1,9 +1,6 @@
 import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
-import { Catbox } from 'node-catbox';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { writeFileSync, unlinkSync } from 'fs';
-import { v4 as uuidv4 } from 'uuid';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -446,31 +443,13 @@ export default async function handler(req, res) {
 
     const imageBuffer = await drawBanner(config);
     
-    const tempFile = `/tmp/${uuidv4()}.png`;
-    writeFileSync(tempFile, imageBuffer);
-
-    try {
-      const catbox = new Catbox();
-      const catboxUrl = await catbox.upload(tempFile);
-      
-      unlinkSync(tempFile);
-
-      return res.status(200).json({
-        success: true,
-        url: catboxUrl,
-        timestamp: new Date().toISOString(),
-        config: {
-          name: config.name,
-          speed: config.speed,
-          label: config.label,
-          system: config.system,
-          datetime: config.datetime
-        }
-      });
-    } catch (uploadError) {
-      unlinkSync(tempFile);
-      throw uploadError;
-    }
+    // Retorna a imagem diretamente
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Content-Length', imageBuffer.length);
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.setHeader('Content-Disposition', `inline; filename="banner-${config.name}-${config.speed}.png"`);
+    
+    return res.status(200).send(imageBuffer);
   } catch (error) {
     console.error('Erro:', error);
     return res.status(500).json({
