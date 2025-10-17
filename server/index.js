@@ -1,11 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
-import { writeFileSync, unlinkSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { v4 as uuidv4 } from 'uuid';
-import { Catbox } from 'node-catbox';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -894,22 +891,13 @@ app.post('/api/generate', async (req, res) => {
 
     const pngBuffer = await drawBanner({ name, speed, label, system, datetime, wallpaper, avatar });
 
-    const tempPath = join(__dirname, `temp-banner-${uuidv4()}.png`);
-    try {
-      writeFileSync(tempPath, pngBuffer);
-      const catbox = new Catbox();
-      const catboxUrl = await catbox.uploadFile({ path: tempPath });
-      return res.json({
-        success: true,
-        url: catboxUrl,
-      });
-    } finally {
-      try {
-        unlinkSync(tempPath);
-      } catch (e) {
-        console.error('Erro ao deletar arquivo temporário:', e);
-      }
-    }
+    // Retorna a imagem diretamente
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Content-Length', pngBuffer.length);
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.setHeader('Content-Disposition', `inline; filename="banner-${name || 'neext'}-${speed || '999'}.png"`);
+    
+    return res.status(200).send(pngBuffer);
 
   } catch (error) {
     console.error('Erro ao gerar banner:', error);
@@ -933,22 +921,13 @@ app.get('/api/banner', async (req, res) => {
 
     const pngBuffer = await drawBanner({ name, speed, label, system, datetime, wallpaper, avatar });
 
-    const tempPath = join(__dirname, `temp-banner-${uuidv4()}.png`);
-    try {
-      writeFileSync(tempPath, pngBuffer);
-      const catbox = new Catbox();
-      const catboxUrl = await catbox.uploadFile({ path: tempPath });
-      return res.json({
-        success: true,
-        url: catboxUrl,
-      });
-    } finally {
-      try {
-        unlinkSync(tempPath);
-      } catch (e) {
-        console.error('Erro ao deletar arquivo temporário:', e);
-      }
-    }
+    // Retorna a imagem diretamente
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Content-Length', pngBuffer.length);
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.setHeader('Content-Disposition', `inline; filename="banner-${name || 'neext'}-${speed || '999'}.png"`);
+    
+    return res.status(200).send(pngBuffer);
 
   } catch (error) {
     console.error('Erro ao gerar banner:', error);
@@ -973,16 +952,17 @@ app.get('/', (req, res) => {
       generateBanner: {
         method: 'GET',
         path: '/api/banner',
-        description: 'Gerar banner e enviar para Catbox',
+        description: 'Gerar banner e retornar imagem PNG diretamente',
         parameters: {
           name: 'Nome a exibir (ex: NEEXT)',
           speed: 'Valor numérico (ex: 999)',
           label: 'Texto do rótulo (ex: VELOCIDADE)',
+          system: 'Nome do sistema (ex: WINDOWS 11)',
           wallpaper: 'URL HTTPS da imagem de fundo',
           avatar: 'URL HTTPS da foto de perfil',
           datetime: 'Data e hora customizada (ex: 16/10/2025 - 20:30)'
         },
-        example: '/api/banner?name=TESTE&speed=100&label=PING'
+        example: '/api/banner?name=TESTE&speed=100&label=PING&system=WINDOWS 11'
       }
     },
     documentation: 'Veja API_README.md para documentação completa'
