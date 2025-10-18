@@ -14,6 +14,8 @@ app.use(express.json({ limit: '50mb' }));
 
 const PORT = process.env.PORT || 3001;
 
+const orbitronFontBase64 = readFileSync(join(__dirname, 'fonts', 'Orbitron-Bold.ttf')).toString('base64');
+
 console.log('✅ Servidor iniciado com sharp para geração de imagens');
 
 const isValidImageUrl = (url) => {
@@ -84,7 +86,11 @@ function generateBannerSVG(config, wallpaperBase64, avatarBase64) {
 <svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <defs>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&amp;display=swap');
+      @font-face {
+        font-family: 'Orbitron';
+        src: url(data:font/truetype;charset=utf-8;base64,${orbitronFontBase64}) format('truetype');
+        font-weight: 400 900;
+      }
       text { font-family: 'Orbitron', sans-serif; }
     </style>
     
@@ -365,7 +371,7 @@ function generateBannerSVG(config, wallpaperBase64, avatarBase64) {
   
   <circle cx="${uploadPanelX + 100}" cy="${bottomRightY + 75}" r="4" fill="#00ff9d" filter="url(#strongGlow)"/>
   <text x="${uploadPanelX + 92}" y="${bottomRightY + 76}" font-size="8" font-weight="700" 
-        fill="#00ff9d" text-anchor="end">ONLINE</text>
+        fill="#00ff9d" text-anchor="end">${(config.system || 'ONLINE').toUpperCase()}</text>
   
   <!-- CENTER: Main avatar with decorative ring -->
   <circle cx="${centerX}" cy="${avatarY}" r="${outerR + 5}" stroke="rgba(0,247,255,0.2)" stroke-width="1" fill="none"/>
@@ -457,7 +463,7 @@ function generateBannerSVG(config, wallpaperBase64, avatarBase64) {
   
   <!-- Label below speed -->
   <text x="${centerX}" y="${avatarY + avatarR + 180}" font-size="26" font-weight="700" 
-        fill="#ffffff" text-anchor="middle" letter-spacing="2" filter="url(#glow)">VELOCIDADE</text>
+        fill="#ffffff" text-anchor="middle" letter-spacing="2" filter="url(#glow)">${(config.label || 'VELOCIDADE').toUpperCase()}</text>
   
 </svg>`;
 
