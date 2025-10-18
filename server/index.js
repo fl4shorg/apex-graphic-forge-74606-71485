@@ -1,8 +1,9 @@
 import express from 'express';
 import cors from 'cors';
-import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
+import sharp from 'sharp';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { readFileSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -13,13 +14,7 @@ app.use(express.json({ limit: '50mb' }));
 
 const PORT = process.env.PORT || 3001;
 
-// Registrar fonte Orbitron
-try {
-  GlobalFonts.registerFromPath(join(__dirname, 'fonts', 'Orbitron-Bold.ttf'), 'Orbitron');
-  console.log('✅ Fonte Orbitron carregada com sucesso');
-} catch (e) {
-  console.warn('Não foi possível carregar a fonte Orbitron, usando sans-serif');
-}
+console.log('✅ Servidor iniciado com sharp para geração de imagens');
 
 const isValidImageUrl = (url) => {
   if (!url) return true;
@@ -32,79 +27,22 @@ const isValidImageUrl = (url) => {
   }
 };
 
-async function drawBanner(config) {
+async function loadImageAsBase64(url) {
+  try {
+    const response = await fetch(url);
+    const buffer = await response.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString('base64');
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
+    return `data:${contentType};base64,${base64}`;
+  } catch (e) {
+    console.error('Erro ao carregar imagem:', e.message);
+    return null;
+  }
+}
+
+function generateBannerSVG(config, wallpaperBase64, avatarBase64) {
   const W = 1365;
   const H = 618;
-  const canvas = createCanvas(W, H);
-  const ctx = canvas.getContext('2d');
-
-  // Load images if provided
-  let wallpaperImg = null;
-  let avatarImg = null;
-
-  try {
-    if (config.wallpaper) {
-      wallpaperImg = await loadImage(config.wallpaper);
-    }
-  } catch (e) {
-    console.error('Erro ao carregar wallpaper:', e.message);
-  }
-
-  try {
-    if (config.avatar) {
-      avatarImg = await loadImage(config.avatar);
-    }
-  } catch (e) {
-    console.error('Erro ao carregar avatar:', e.message);
-  }
-
-  // Draw background
-  if (wallpaperImg) {
-    const img = wallpaperImg;
-    const r = Math.max(W / img.width, H / img.height);
-    const iw = img.width * r;
-    const ih = img.height * r;
-    const ox = (W - iw) / 2;
-    const oy = (H - ih) / 2;
-    ctx.drawImage(img, ox, oy, iw, ih);
-    
-    ctx.fillStyle = "rgba(10, 15, 30, 0.7)";
-    ctx.fillRect(0, 0, W, H);
-  } else {
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, "#0a1635");
-    g.addColorStop(1, "#0a1129");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
-
-    const g2 = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, H);
-    g2.addColorStop(0, "rgba(0, 247, 255, 0.05)");
-    g2.addColorStop(1, "rgba(180, 0, 255, 0.05)");
-    ctx.fillStyle = g2;
-    ctx.fillRect(0, 0, W, H);
-  }
-
-  // Draw diagonal connecting lines
-  ctx.strokeStyle = "rgba(0, 247, 255, 0.3)";
-  ctx.lineWidth = 2;
-  
-  ctx.beginPath();
-  ctx.moveTo(0, 100);
-  ctx.lineTo(300, 200);
-  ctx.moveTo(0, 200);
-  ctx.lineTo(320, 300);
-  ctx.moveTo(50, H);
-  ctx.lineTo(320, 400);
-  ctx.stroke();
-  
-  ctx.beginPath();
-  ctx.moveTo(W, 100);
-  ctx.lineTo(W - 300, 200);
-  ctx.moveTo(W, 200);
-  ctx.lineTo(W - 320, 300);
-  ctx.moveTo(W - 50, H);
-  ctx.lineTo(W - 320, 400);
-  ctx.stroke();
 
   const now = new Date();
   const dateText = config.datetime?.trim() 
@@ -114,796 +52,480 @@ async function drawBanner(config) {
     ? config.datetime.split(" - ")[1] 
     : now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
 
-  // LEFT TOP: Date with calendar icon
-  ctx.save();
-  ctx.translate(30, 30);
-  
-  ctx.beginPath();
-  ctx.roundRect(0, 0, 22, 24, 4);
-  ctx.strokeStyle = "#00f7ff";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  
-  ctx.beginPath();
-  ctx.roundRect(0, 0, 22, 6, 4);
-  ctx.fillStyle = "#00f7ff";
-  ctx.fill();
-  
-  ctx.strokeStyle = "rgba(0, 247, 255, 0.4)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(7, 10);
-  ctx.lineTo(7, 20);
-  ctx.moveTo(14, 10);
-  ctx.lineTo(14, 20);
-  ctx.moveTo(3, 14);
-  ctx.lineTo(19, 14);
-  ctx.stroke();
-  
-  ctx.restore();
+  const name = (config.name || "NEEXT").toUpperCase();
+  const speed = String(config.speed || "999");
 
-  ctx.font = "700 16px Orbitron, sans-serif";
-  ctx.textAlign = "left";
-  ctx.textBaseline = "middle";
-  ctx.fillStyle = "#ffffff";
-  ctx.shadowColor = "#00f7ff";
-  ctx.shadowBlur = 5;
-  ctx.fillText(dateText, 62, 42);
-  ctx.shadowBlur = 0;
-
-  // RIGHT TOP: Time with clock icon
-  ctx.textAlign = "right";
-  ctx.font = "700 16px Orbitron, sans-serif";
-  ctx.fillText(timeText, W - 60, 42);
-  
-  ctx.save();
-  ctx.translate(W - 30, 30);
-  
-  ctx.beginPath();
-  ctx.arc(0, 12, 11, 0, Math.PI * 2);
-  ctx.strokeStyle = "#00f7ff";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  
-  ctx.strokeStyle = "#00f7ff";
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(0, 12);
-  ctx.lineTo(0, 5);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(0, 12);
-  ctx.lineTo(6, 12);
-  ctx.stroke();
-  
-  ctx.beginPath();
-  ctx.arc(0, 12, 2, 0, Math.PI * 2);
-  ctx.fillStyle = "#00f7ff";
-  ctx.fill();
-  
-  ctx.restore();
-  
-  ctx.textAlign = "left";
-  ctx.textBaseline = "top";
-
-  // LEFT PANEL: Small avatar + info
   const leftPanelX = 40;
   const leftPanelY = 90;
   const leftPanelW = 300;
   const leftPanelH = 180;
-  
-  ctx.shadowColor = "rgba(0, 247, 255, 0.3)";
-  ctx.shadowBlur = 15;
-  ctx.strokeStyle = "#00f7ff";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.roundRect(leftPanelX, leftPanelY, leftPanelW, leftPanelH, 15);
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-  
-  ctx.strokeStyle = "#00f7ff";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(leftPanelX + 15, leftPanelY);
-  ctx.lineTo(leftPanelX, leftPanelY);
-  ctx.lineTo(leftPanelX, leftPanelY + 15);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(leftPanelX + leftPanelW - 15, leftPanelY);
-  ctx.lineTo(leftPanelX + leftPanelW, leftPanelY);
-  ctx.lineTo(leftPanelX + leftPanelW, leftPanelY + 15);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(leftPanelX + 15, leftPanelY + leftPanelH);
-  ctx.lineTo(leftPanelX, leftPanelY + leftPanelH);
-  ctx.lineTo(leftPanelX, leftPanelY + leftPanelH - 15);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(leftPanelX + leftPanelW - 15, leftPanelY + leftPanelH);
-  ctx.lineTo(leftPanelX + leftPanelW, leftPanelY + leftPanelH);
-  ctx.lineTo(leftPanelX + leftPanelW, leftPanelY + leftPanelH - 15);
-  ctx.stroke();
-  
+
+  const rightPanelBaseX = W - 280;
+  const latPanelY = 90;
+  const latPanelW = 250;
+  const latPanelH = 80;
+
+  const centerX = W / 2;
+  const avatarY = H * 0.35;
+  const avatarR = 130;
+  const outerR = avatarR + 35;
+
   const smallAvatarX = leftPanelX + 60;
   const smallAvatarY = leftPanelY + 60;
   const smallAvatarR = 40;
+
+  const lapPanelY = latPanelY + latPanelH + 20;
+  const latGraphY = lapPanelY + latPanelH + 20;
+  const latGraphH = 90;
+  const uploadPanelX = rightPanelBaseX + 130;
+  const bottomRightY = latGraphY + latGraphH + 20;
+
+  let svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&amp;display=swap');
+      text { font-family: 'Orbitron', sans-serif; }
+    </style>
+    
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a1635;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0a1129;stop-opacity:1" />
+    </linearGradient>
+    
+    <radialGradient id="bgRadial" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:rgba(0,247,255,0.05);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgba(180,0,255,0.05);stop-opacity:1" />
+    </radialGradient>
+    
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <filter id="strongGlow">
+      <feGaussianBlur stdDeviation="10" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <filter id="textGlow">
+      <feGaussianBlur stdDeviation="25" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <linearGradient id="frameGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:rgba(0,247,255,0.05);stop-opacity:1" />
+      <stop offset="50%" style="stop-color:rgba(0,247,255,0.15);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgba(0,247,255,0.05);stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="sysGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00f7ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00ff9d;stop-opacity:1" />
+    </linearGradient>
+    
+    <clipPath id="smallAvatarClip">
+      <circle cx="${smallAvatarX}" cy="${smallAvatarY}" r="${smallAvatarR}" />
+    </clipPath>
+    
+    <clipPath id="mainAvatarClip">
+      <circle cx="${centerX}" cy="${avatarY}" r="${avatarR}" />
+    </clipPath>
+  </defs>
   
-  if (avatarImg) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(smallAvatarX, smallAvatarY, smallAvatarR, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.clip();
-    
-    const img = avatarImg;
-    const r = Math.max((smallAvatarR * 2) / img.width, (smallAvatarR * 2) / img.height);
-    const iw = img.width * r;
-    const ih = img.height * r;
-    ctx.drawImage(img, smallAvatarX - iw / 2, smallAvatarY - ih / 2, iw, ih);
-    ctx.restore();
-    
-    ctx.strokeStyle = "#00f7ff";
-    ctx.lineWidth = 2;
-    ctx.shadowColor = "#00f7ff";
-    ctx.shadowBlur = 10;
-    ctx.beginPath();
-    for (let i = 0; i < 6; i++) {
-      const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
-      const x = smallAvatarX + Math.cos(angle) * (smallAvatarR + 5);
-      const y = smallAvatarY + Math.sin(angle) * (smallAvatarR + 5);
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    ctx.closePath();
-    ctx.stroke();
-    ctx.shadowBlur = 0;
+  <!-- Background -->`;
+
+  if (wallpaperBase64) {
+    svg += `
+  <image href="${wallpaperBase64}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice"/>
+  <rect x="0" y="0" width="${W}" height="${H}" fill="rgba(10,15,30,0.7)"/>`;
+  } else {
+    svg += `
+  <rect x="0" y="0" width="${W}" height="${H}" fill="url(#bgGradient)"/>
+  <rect x="0" y="0" width="${W}" height="${H}" fill="url(#bgRadial)"/>`;
   }
+
+  svg += `
   
-  ctx.font = "700 16px Orbitron, sans-serif";
-  ctx.fillStyle = "#00f7ff";
-  ctx.shadowColor = "#00f7ff";
-  ctx.shadowBlur = 5;
-  ctx.fillText((config.name || "NEEXT").toUpperCase(), leftPanelX + 120, leftPanelY + 35);
-  ctx.shadowBlur = 0;
+  <!-- Diagonal connecting lines -->
+  <line x1="0" y1="100" x2="300" y2="200" stroke="rgba(0,247,255,0.3)" stroke-width="2"/>
+  <line x1="0" y1="200" x2="320" y2="300" stroke="rgba(0,247,255,0.3)" stroke-width="2"/>
+  <line x1="50" y1="${H}" x2="320" y2="400" stroke="rgba(0,247,255,0.3)" stroke-width="2"/>
   
-  ctx.font = "400 10px Orbitron, sans-serif";
-  ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-  ctx.fillText("▸ ID: 0000000000", leftPanelX + 120, leftPanelY + 55);
-  ctx.fillText("▸ VIP: PREMIUM", leftPanelX + 120, leftPanelY + 72);
-  ctx.fillText("▸ RANK: #1", leftPanelX + 120, leftPanelY + 89);
+  <line x1="${W}" y1="100" x2="${W - 300}" y2="200" stroke="rgba(0,247,255,0.3)" stroke-width="2"/>
+  <line x1="${W}" y1="200" x2="${W - 320}" y2="300" stroke="rgba(0,247,255,0.3)" stroke-width="2"/>
+  <line x1="${W - 50}" y1="${H}" x2="${W - 320}" y2="400" stroke="rgba(0,247,255,0.3)" stroke-width="2"/>
   
-  ctx.fillStyle = "#00ff9d";
-  ctx.beginPath();
-  ctx.arc(leftPanelX + 115, leftPanelY + 58, 3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = "#00f7ff";
-  ctx.beginPath();
-  ctx.arc(leftPanelX + 115, leftPanelY + 75, 3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = "#ff0055";
-  ctx.beginPath();
-  ctx.arc(leftPanelX + 115, leftPanelY + 92, 3, 0, Math.PI * 2);
-  ctx.fill();
+  <!-- LEFT TOP: Date icon -->
+  <rect x="30" y="30" width="22" height="24" rx="4" stroke="#00f7ff" stroke-width="2" fill="none"/>
+  <rect x="30" y="30" width="22" height="6" rx="4" fill="#00f7ff"/>
+  <line x1="37" y1="40" x2="37" y2="50" stroke="rgba(0,247,255,0.4)" stroke-width="1"/>
+  <line x1="44" y1="40" x2="44" y2="50" stroke="rgba(0,247,255,0.4)" stroke-width="1"/>
+  <line x1="33" y1="44" x2="49" y2="44" stroke="rgba(0,247,255,0.4)" stroke-width="1"/>
+  
+  <text x="62" y="47" font-size="16" font-weight="700" fill="#ffffff" filter="url(#glow)">${dateText}</text>
+  
+  <!-- RIGHT TOP: Time icon -->
+  <circle cx="${W - 30}" cy="42" r="11" stroke="#00f7ff" stroke-width="2" fill="none"/>
+  <line x1="${W - 30}" y1="42" x2="${W - 30}" y2="35" stroke="#00f7ff" stroke-width="1.5"/>
+  <line x1="${W - 30}" y1="42" x2="${W - 24}" y2="42" stroke="#00f7ff" stroke-width="1.5"/>
+  <circle cx="${W - 30}" cy="42" r="2" fill="#00f7ff"/>
+  
+  <text x="${W - 60}" y="47" font-size="16" font-weight="700" fill="#ffffff" text-anchor="end" filter="url(#glow)">${timeText}</text>
+  
+  <!-- LEFT PANEL: Small avatar + info -->
+  <rect x="${leftPanelX}" y="${leftPanelY}" width="${leftPanelW}" height="${leftPanelH}" rx="15" 
+        stroke="#00f7ff" stroke-width="2" fill="none" filter="url(#strongGlow)"/>
+  
+  <!-- Left panel corner highlights -->
+  <path d="M ${leftPanelX + 15} ${leftPanelY} L ${leftPanelX} ${leftPanelY} L ${leftPanelX} ${leftPanelY + 15}" 
+        stroke="#00f7ff" stroke-width="3" fill="none"/>
+  <path d="M ${leftPanelX + leftPanelW - 15} ${leftPanelY} L ${leftPanelX + leftPanelW} ${leftPanelY} L ${leftPanelX + leftPanelW} ${leftPanelY + 15}" 
+        stroke="#00f7ff" stroke-width="3" fill="none"/>
+  <path d="M ${leftPanelX + 15} ${leftPanelY + leftPanelH} L ${leftPanelX} ${leftPanelY + leftPanelH} L ${leftPanelX} ${leftPanelY + leftPanelH - 15}" 
+        stroke="#00f7ff" stroke-width="3" fill="none"/>
+  <path d="M ${leftPanelX + leftPanelW - 15} ${leftPanelY + leftPanelH} L ${leftPanelX + leftPanelW} ${leftPanelY + leftPanelH} L ${leftPanelX + leftPanelW} ${leftPanelY + leftPanelH - 15}" 
+        stroke="#00f7ff" stroke-width="3" fill="none"/>
+  `;
+
+  if (avatarBase64) {
+    svg += `
+  <image href="${avatarBase64}" x="${smallAvatarX - smallAvatarR}" y="${smallAvatarY - smallAvatarR}" 
+         width="${smallAvatarR * 2}" height="${smallAvatarR * 2}" preserveAspectRatio="xMidYMid slice"
+         clip-path="url(#smallAvatarClip)"/>
+  <polygon points="${Array.from({length: 6}, (_, i) => {
+    const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+    const x = smallAvatarX + Math.cos(angle) * (smallAvatarR + 5);
+    const y = smallAvatarY + Math.sin(angle) * (smallAvatarR + 5);
+    return `${x},${y}`;
+  }).join(' ')}" stroke="#00f7ff" stroke-width="2" fill="none" filter="url(#strongGlow)"/>`;
+  }
+
+  svg += `
+  
+  <text x="${leftPanelX + 120}" y="${leftPanelY + 40}" font-size="16" font-weight="700" 
+        fill="#00f7ff" filter="url(#glow)">${name}</text>
+  
+  <text x="${leftPanelX + 120}" y="${leftPanelY + 60}" font-size="10" font-weight="400" 
+        fill="rgba(255,255,255,0.7)">▸ ID: 0000000000</text>
+  <text x="${leftPanelX + 120}" y="${leftPanelY + 77}" font-size="10" font-weight="400" 
+        fill="rgba(255,255,255,0.7)">▸ VIP: PREMIUM</text>
+  <text x="${leftPanelX + 120}" y="${leftPanelY + 94}" font-size="10" font-weight="400" 
+        fill="rgba(255,255,255,0.7)">▸ RANK: #1</text>
+  
+  <circle cx="${leftPanelX + 115}" cy="${leftPanelY + 58}" r="3" fill="#00ff9d"/>
+  <circle cx="${leftPanelX + 115}" cy="${leftPanelY + 75}" r="3" fill="#00f7ff"/>
+  <circle cx="${leftPanelX + 115}" cy="${leftPanelY + 92}" r="3" fill="#ff0055"/>
+  `;
 
   const graphY = leftPanelY + 125;
   const barHeights = [15, 25, 18, 30, 22, 28, 20];
   const barWidth = 8;
   const barGap = 10;
-  
   for (let i = 0; i < barHeights.length; i++) {
-    ctx.fillStyle = "rgba(0, 247, 255, 0.6)";
-    ctx.fillRect(
-      leftPanelX + 20 + i * (barWidth + barGap),
-      graphY + 30 - barHeights[i],
-      barWidth,
-      barHeights[i]
-    );
+    svg += `
+  <rect x="${leftPanelX + 20 + i * (barWidth + barGap)}" y="${graphY + 30 - barHeights[i]}" 
+        width="${barWidth}" height="${barHeights[i]}" fill="rgba(0,247,255,0.6)"/>`;
   }
 
-  // RIGHT TOP PANELS
-  const rightPanelBaseX = W - 280;
-  const latPanelY = 90;
-  const latPanelW = 250;
-  const latPanelH = 80;
+  svg += `
   
-  ctx.shadowColor = "rgba(0, 247, 255, 0.3)";
-  ctx.shadowBlur = 15;
-  ctx.strokeStyle = "#00f7ff";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.roundRect(rightPanelBaseX, latPanelY, latPanelW, latPanelH, 15);
-  ctx.stroke();
-  ctx.shadowBlur = 0;
+  <!-- RIGHT TOP PANELS -->
+  <!-- LATÊNCIA panel -->
+  <rect x="${rightPanelBaseX}" y="${latPanelY}" width="${latPanelW}" height="${latPanelH}" rx="15" 
+        stroke="#00f7ff" stroke-width="2" fill="none" filter="url(#strongGlow)"/>
+  <path d="M ${rightPanelBaseX + 15} ${latPanelY} L ${rightPanelBaseX} ${latPanelY} L ${rightPanelBaseX} ${latPanelY + 15}" 
+        stroke="#00f7ff" stroke-width="3" fill="none"/>
+  <path d="M ${rightPanelBaseX + latPanelW - 15} ${latPanelY} L ${rightPanelBaseX + latPanelW} ${latPanelY} L ${rightPanelBaseX + latPanelW} ${latPanelY + 15}" 
+        stroke="#00f7ff" stroke-width="3" fill="none"/>
   
-  ctx.strokeStyle = "#00f7ff";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(rightPanelBaseX + 15, latPanelY);
-  ctx.lineTo(rightPanelBaseX, latPanelY);
-  ctx.lineTo(rightPanelBaseX, latPanelY + 15);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(rightPanelBaseX + latPanelW - 15, latPanelY);
-  ctx.lineTo(rightPanelBaseX + latPanelW, latPanelY);
-  ctx.lineTo(rightPanelBaseX + latPanelW, latPanelY + 15);
-  ctx.stroke();
+  <text x="${rightPanelBaseX + 20}" y="${latPanelY + 25}" font-size="13" font-weight="700" 
+        fill="#00f7ff" filter="url(#glow)">▸ LATÊNCIA</text>
   
-  ctx.font = "700 13px Orbitron, sans-serif";
-  ctx.fillStyle = "#00f7ff";
-  ctx.shadowColor = "#00f7ff";
-  ctx.shadowBlur = 5;
-  ctx.fillText("▸ LATÊNCIA", rightPanelBaseX + 20, latPanelY + 20);
-  ctx.shadowBlur = 0;
+  <circle cx="${rightPanelBaseX + 60}" cy="${latPanelY + 50}" r="22" stroke="rgba(0,247,255,0.2)" stroke-width="1" fill="none"/>
+  <circle cx="${rightPanelBaseX + 60}" cy="${latPanelY + 50}" r="20" stroke="rgba(255,255,255,0.15)" stroke-width="3" fill="none"/>
+  <path d="M ${rightPanelBaseX + 60} ${latPanelY + 30} A 20 20 0 0 1 ${rightPanelBaseX + 61.25} ${latPanelY + 30.13}" 
+        stroke="#00f7ff" stroke-width="3" fill="none" filter="url(#strongGlow)"/>
   
-  ctx.save();
-  ctx.translate(rightPanelBaseX + 60, latPanelY + 50);
+  <text x="${rightPanelBaseX + 60}" y="${latPanelY + 55}" font-size="13" font-weight="700" 
+        fill="#00f7ff" text-anchor="middle" filter="url(#glow)">2%</text>
   
-  ctx.beginPath();
-  ctx.arc(0, 0, 22, 0, Math.PI * 2);
-  ctx.strokeStyle = "rgba(0, 247, 255, 0.2)";
-  ctx.lineWidth = 1;
-  ctx.stroke();
+  <!-- LAPN10AR panel -->
+  <rect x="${rightPanelBaseX}" y="${lapPanelY}" width="${latPanelW}" height="${latPanelH}" rx="15" 
+        stroke="#00f7ff" stroke-width="2" fill="none" filter="url(#strongGlow)"/>
+  <path d="M ${rightPanelBaseX + latPanelW - 15} ${lapPanelY + latPanelH} L ${rightPanelBaseX + latPanelW} ${lapPanelY + latPanelH} L ${rightPanelBaseX + latPanelW} ${lapPanelY + latPanelH - 15}" 
+        stroke="#00f7ff" stroke-width="3" fill="none"/>
   
-  ctx.beginPath();
-  ctx.arc(0, 0, 20, 0, Math.PI * 2);
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
-  ctx.lineWidth = 3;
-  ctx.stroke();
+  <text x="${rightPanelBaseX + 20}" y="${lapPanelY + 25}" font-size="13" font-weight="700" 
+        fill="#00f7ff" filter="url(#glow)">▸ LAPN10AR</text>
   
-  ctx.shadowColor = "#00f7ff";
-  ctx.shadowBlur = 10;
-  ctx.beginPath();
-  ctx.arc(0, 0, 20, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * 0.02));
-  ctx.strokeStyle = "#00f7ff";
-  ctx.lineWidth = 3;
-  ctx.stroke();
-  ctx.shadowBlur = 0;
+  <text x="${rightPanelBaseX + 20}" y="${lapPanelY + 53}" font-size="10" font-weight="400" 
+        fill="rgba(255,255,255,0.7)">• PING: 15ms</text>
+  <text x="${rightPanelBaseX + 135}" y="${lapPanelY + 53}" font-size="10" font-weight="400" 
+        fill="rgba(255,255,255,0.7)">• LOSS: 0%</text>
   
-  ctx.font = "700 13px Orbitron, sans-serif";
-  ctx.fillStyle = "#00f7ff";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.shadowColor = "#00f7ff";
-  ctx.shadowBlur = 5;
-  ctx.fillText("2%", 0, 0);
-  ctx.shadowBlur = 0;
-  ctx.restore();
+  <rect x="${rightPanelBaseX + 20}" y="${lapPanelY + 60}" width="100" height="4" fill="rgba(255,255,255,0.1)"/>
+  <rect x="${rightPanelBaseX + 20}" y="${lapPanelY + 60}" width="85" height="4" fill="#00ff9d"/>
   
-  ctx.textAlign = "left";
-  ctx.textBaseline = "top";
+  <rect x="${rightPanelBaseX + 135}" y="${lapPanelY + 60}" width="95" height="4" fill="rgba(255,255,255,0.1)"/>
+  <rect x="${rightPanelBaseX + 135}" y="${lapPanelY + 60}" width="95" height="4" fill="#00f7ff"/>
+  
+  <!-- LATÊNCIA graph panel -->
+  <rect x="${rightPanelBaseX}" y="${latGraphY}" width="120" height="${latGraphH}" rx="15" 
+        stroke="#00f7ff" stroke-width="2" fill="none" filter="url(#strongGlow)"/>
+  
+  <text x="${rightPanelBaseX + 12}" y="${latGraphY + 20}" font-size="11" font-weight="700" 
+        fill="#00f7ff" filter="url(#glow)">▸ LATÊNCIA</text>
+  `;
 
-  // LAPN10AR panel
-  const lapPanelY = latPanelY + latPanelH + 20;
-  
-  ctx.shadowColor = "rgba(0, 247, 255, 0.3)";
-  ctx.shadowBlur = 15;
-  ctx.strokeStyle = "#00f7ff";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.roundRect(rightPanelBaseX, lapPanelY, latPanelW, latPanelH, 15);
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-  
-  ctx.strokeStyle = "#00f7ff";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(rightPanelBaseX + latPanelW - 15, lapPanelY + latPanelH);
-  ctx.lineTo(rightPanelBaseX + latPanelW, lapPanelY + latPanelH);
-  ctx.lineTo(rightPanelBaseX + latPanelW, lapPanelY + latPanelH - 15);
-  ctx.stroke();
-  
-  ctx.font = "700 13px Orbitron, sans-serif";
-  ctx.fillStyle = "#00f7ff";
-  ctx.shadowColor = "#00f7ff";
-  ctx.shadowBlur = 5;
-  ctx.fillText("▸ LAPN10AR", rightPanelBaseX + 20, lapPanelY + 20);
-  ctx.shadowBlur = 0;
-  
-  ctx.font = "400 10px Orbitron, sans-serif";
-  ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-  ctx.fillText("• PING: 15ms", rightPanelBaseX + 20, lapPanelY + 48);
-  ctx.fillText("• LOSS: 0%", rightPanelBaseX + 135, lapPanelY + 48);
-  
-  ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-  ctx.fillRect(rightPanelBaseX + 20, lapPanelY + 60, 100, 4);
-  ctx.fillStyle = "#00ff9d";
-  ctx.fillRect(rightPanelBaseX + 20, lapPanelY + 60, 85, 4);
-  
-  ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-  ctx.fillRect(rightPanelBaseX + 135, lapPanelY + 60, 95, 4);
-  ctx.fillStyle = "#00f7ff";
-  ctx.fillRect(rightPanelBaseX + 135, lapPanelY + 60, 95, 4);
-
-  // LATÊNCIA graph panel
-  const latGraphY = lapPanelY + latPanelH + 20;
-  const latGraphH = 90;
-  
-  ctx.shadowColor = "rgba(0, 247, 255, 0.3)";
-  ctx.shadowBlur = 15;
-  ctx.strokeStyle = "#00f7ff";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.roundRect(rightPanelBaseX, latGraphY, 120, latGraphH, 15);
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-  
-  ctx.font = "700 11px Orbitron, sans-serif";
-  ctx.fillStyle = "#00f7ff";
-  ctx.shadowColor = "#00f7ff";
-  ctx.shadowBlur = 5;
-  ctx.fillText("▸ LATÊNCIA", rightPanelBaseX + 12, latGraphY + 15);
-  ctx.shadowBlur = 0;
-  
   const latBarHeights = [20, 35, 25, 40, 30, 45];
   for (let i = 0; i < latBarHeights.length; i++) {
-    const gradient = ctx.createLinearGradient(0, latGraphY + 65, 0, latGraphY + 65 - latBarHeights[i]);
-    gradient.addColorStop(0, "rgba(0, 247, 255, 0.3)");
-    gradient.addColorStop(1, "rgba(0, 247, 255, 0.9)");
-    ctx.fillStyle = gradient;
-    ctx.fillRect(rightPanelBaseX + 12 + i * 16, latGraphY + 65 - latBarHeights[i], 10, latBarHeights[i]);
+    svg += `
+  <defs>
+    <linearGradient id="latBar${i}" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:rgba(0,247,255,0.3);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgba(0,247,255,0.9);stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect x="${rightPanelBaseX + 12 + i * 16}" y="${latGraphY + 65 - latBarHeights[i]}" 
+        width="10" height="${latBarHeights[i]}" fill="url(#latBar${i})"/>`;
   }
 
-  // UPLOAD panel
-  const uploadPanelX = rightPanelBaseX + 130;
+  svg += `
   
-  ctx.shadowColor = "rgba(0, 247, 255, 0.3)";
-  ctx.shadowBlur = 15;
-  ctx.strokeStyle = "#00f7ff";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.roundRect(uploadPanelX, latGraphY, 120, latGraphH, 15);
-  ctx.stroke();
-  ctx.shadowBlur = 0;
+  <!-- UPLOAD panel -->
+  <rect x="${uploadPanelX}" y="${latGraphY}" width="120" height="${latGraphH}" rx="15" 
+        stroke="#00f7ff" stroke-width="2" fill="none" filter="url(#strongGlow)"/>
   
-  ctx.font = "700 11px Orbitron, sans-serif";
-  ctx.fillStyle = "#00f7ff";
-  ctx.shadowColor = "#00f7ff";
-  ctx.shadowBlur = 5;
-  ctx.fillText("▸ UPLOAD", uploadPanelX + 12, latGraphY + 15);
-  ctx.shadowBlur = 0;
+  <text x="${uploadPanelX + 12}" y="${latGraphY + 20}" font-size="11" font-weight="700" 
+        fill="#00f7ff" filter="url(#glow)">▸ UPLOAD</text>
   
-  ctx.save();
-  ctx.translate(uploadPanelX + 60, latGraphY + 48);
-  ctx.strokeStyle = "#00f7ff";
-  ctx.shadowColor = "#00f7ff";
-  ctx.shadowBlur = 10;
-  ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  ctx.moveTo(0, -12);
-  ctx.lineTo(0, 12);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(-6, -6);
-  ctx.lineTo(0, -12);
-  ctx.lineTo(6, -6);
-  ctx.stroke();
-  ctx.shadowBlur = 0;
+  <g transform="translate(${uploadPanelX + 60}, ${latGraphY + 48})" filter="url(#strongGlow)">
+    <line x1="0" y1="-12" x2="0" y2="12" stroke="#00f7ff" stroke-width="2.5"/>
+    <polyline points="-6,-6 0,-12 6,-6" stroke="#00f7ff" stroke-width="2.5" fill="none"/>
+  </g>
   
-  ctx.font = "700 10px Orbitron, sans-serif";
-  ctx.fillStyle = "#00ff9d";
-  ctx.textAlign = "center";
-  ctx.fillText("850 MB/s", 0, 25);
-  ctx.restore();
-  ctx.textAlign = "left";
+  <text x="${uploadPanelX + 60}" y="${latGraphY + 73}" font-size="10" font-weight="700" 
+        fill="#00ff9d" text-anchor="middle">850 MB/s</text>
+  
+  <!-- DOWNLOAD panel -->
+  <rect x="${rightPanelBaseX}" y="${bottomRightY}" width="120" height="90" rx="15" 
+        stroke="#00f7ff" stroke-width="2" fill="none" filter="url(#strongGlow)"/>
+  
+  <text x="${rightPanelBaseX + 12}" y="${bottomRightY + 20}" font-size="11" font-weight="700" 
+        fill="#00f7ff" filter="url(#glow)">▸ DOWNLOAD</text>
+  `;
 
-  // DOWNLOAD and ESTADO DO SISTEMA panels
-  const bottomRightY = latGraphY + latGraphH + 20;
-  
-  ctx.shadowColor = "rgba(0, 247, 255, 0.3)";
-  ctx.shadowBlur = 15;
-  ctx.strokeStyle = "#00f7ff";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.roundRect(rightPanelBaseX, bottomRightY, 120, 90, 15);
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-  
-  ctx.font = "700 11px Orbitron, sans-serif";
-  ctx.fillStyle = "#00f7ff";
-  ctx.shadowColor = "#00f7ff";
-  ctx.shadowBlur = 5;
-  ctx.fillText("▸ DOWNLOAD", rightPanelBaseX + 12, bottomRightY + 15);
-  ctx.shadowBlur = 0;
-  
   const dlBarHeights = [25, 40, 30, 35, 45, 28];
   for (let i = 0; i < dlBarHeights.length; i++) {
-    const gradient = ctx.createLinearGradient(0, bottomRightY + 70, 0, bottomRightY + 70 - dlBarHeights[i]);
-    gradient.addColorStop(0, "rgba(0, 255, 157, 0.3)");
-    gradient.addColorStop(1, "rgba(0, 255, 157, 0.9)");
-    ctx.fillStyle = gradient;
-    ctx.fillRect(rightPanelBaseX + 12 + i * 16, bottomRightY + 70 - dlBarHeights[i], 10, dlBarHeights[i]);
+    svg += `
+  <defs>
+    <linearGradient id="dlBar${i}" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:rgba(0,255,157,0.3);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgba(0,255,157,0.9);stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect x="${rightPanelBaseX + 12 + i * 16}" y="${bottomRightY + 70 - dlBarHeights[i]}" 
+        width="10" height="${dlBarHeights[i]}" fill="url(#dlBar${i})"/>`;
   }
+
+  svg += `
   
-  ctx.shadowColor = "rgba(0, 247, 255, 0.3)";
-  ctx.shadowBlur = 15;
-  ctx.strokeStyle = "#00f7ff";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.roundRect(uploadPanelX, bottomRightY, 120, 90, 15);
-  ctx.stroke();
-  ctx.shadowBlur = 0;
+  <!-- ESTADO DO SISTEMA panel -->
+  <rect x="${uploadPanelX}" y="${bottomRightY}" width="120" height="90" rx="15" 
+        stroke="#00f7ff" stroke-width="2" fill="none" filter="url(#strongGlow)"/>
   
-  ctx.font = "700 10px Orbitron, sans-serif";
-  ctx.fillStyle = "#00f7ff";
-  ctx.shadowColor = "#00f7ff";
-  ctx.shadowBlur = 5;
-  ctx.fillText("▸ ESTADO DO", uploadPanelX + 12, bottomRightY + 12);
-  ctx.fillText("  SISTEMA", uploadPanelX + 12, bottomRightY + 25);
-  ctx.shadowBlur = 0;
-  
+  <text x="${uploadPanelX + 12}" y="${bottomRightY + 17}" font-size="10" font-weight="700" 
+        fill="#00f7ff" filter="url(#glow)">▸ ESTADO DO</text>
+  <text x="${uploadPanelX + 12}" y="${bottomRightY + 30}" font-size="10" font-weight="700" 
+        fill="#00f7ff" filter="url(#glow)">  SISTEMA</text>
+  `;
+
   const sysBarWidths = [85, 92, 75];
   const sysBarLabels = ["CPU", "RAM", "GPU"];
   const sysBarY = bottomRightY + 45;
-  
   for (let i = 0; i < sysBarWidths.length; i++) {
-    ctx.font = "400 8px Orbitron, sans-serif";
-    ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-    ctx.fillText(sysBarLabels[i], uploadPanelX + 12, sysBarY + i * 13 - 2);
-    
-    ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-    ctx.fillRect(uploadPanelX + 12, sysBarY + i * 13 + 3, 90, 5);
-    
-    const gradient = ctx.createLinearGradient(uploadPanelX + 12, 0, uploadPanelX + 12 + 90, 0);
-    gradient.addColorStop(0, "#00f7ff");
-    gradient.addColorStop(1, "#00ff9d");
-    ctx.fillStyle = gradient;
-    ctx.fillRect(uploadPanelX + 12, sysBarY + i * 13 + 3, sysBarWidths[i], 5);
+    svg += `
+  <text x="${uploadPanelX + 12}" y="${sysBarY + i * 13 + 1}" font-size="8" font-weight="400" 
+        fill="rgba(255,255,255,0.6)">${sysBarLabels[i]}</text>
+  <rect x="${uploadPanelX + 12}" y="${sysBarY + i * 13 + 3}" width="90" height="5" fill="rgba(255,255,255,0.1)"/>
+  <rect x="${uploadPanelX + 12}" y="${sysBarY + i * 13 + 3}" width="${sysBarWidths[i]}" height="5" fill="url(#sysGradient)"/>`;
   }
-  
-  ctx.save();
-  ctx.translate(uploadPanelX + 100, bottomRightY + 75);
-  ctx.shadowColor = "#00ff9d";
-  ctx.shadowBlur = 10;
-  ctx.beginPath();
-  ctx.arc(0, 0, 4, 0, Math.PI * 2);
-  ctx.fillStyle = "#00ff9d";
-  ctx.fill();
-  ctx.shadowBlur = 0;
-  ctx.font = "700 8px Orbitron, sans-serif";
-  ctx.fillStyle = "#00ff9d";
-  ctx.textAlign = "right";
-  ctx.fillText("ONLINE", -8, 1);
-  ctx.restore();
-  ctx.textAlign = "left";
 
-  // CENTER: Main avatar with decorative ring
-  const centerX = W / 2;
-  const avatarY = H * 0.35;
-  const avatarR = 130;
+  svg += `
+  
+  <circle cx="${uploadPanelX + 100}" cy="${bottomRightY + 75}" r="4" fill="#00ff9d" filter="url(#strongGlow)"/>
+  <text x="${uploadPanelX + 92}" y="${bottomRightY + 76}" font-size="8" font-weight="700" 
+        fill="#00ff9d" text-anchor="end">ONLINE</text>
+  
+  <!-- CENTER: Main avatar with decorative ring -->
+  <circle cx="${centerX}" cy="${avatarY}" r="${outerR + 5}" stroke="rgba(0,247,255,0.2)" stroke-width="1" fill="none"/>
+  <circle cx="${centerX}" cy="${avatarY}" r="${outerR}" stroke="#00f7ff" stroke-width="2" fill="none" filter="url(#strongGlow)"/>
+  <circle cx="${centerX}" cy="${avatarY}" r="${outerR - 5}" stroke="rgba(0,247,255,0.3)" stroke-width="1" fill="none"/>
+  `;
 
-  ctx.save();
-  ctx.translate(centerX, avatarY);
-  
-  const outerR = avatarR + 35;
-  
-  ctx.strokeStyle = "rgba(0, 247, 255, 0.2)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.arc(0, 0, outerR + 5, 0, Math.PI * 2);
-  ctx.stroke();
-  
-  ctx.shadowColor = "#00f7ff";
-  ctx.shadowBlur = 10;
-  ctx.strokeStyle = "#00f7ff";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(0, 0, outerR, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-  
-  ctx.strokeStyle = "rgba(0, 247, 255, 0.3)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.arc(0, 0, outerR - 5, 0, Math.PI * 2);
-  ctx.stroke();
-  
-  ctx.strokeStyle = "#00f7ff";
-  ctx.shadowColor = "#00f7ff";
-  ctx.shadowBlur = 8;
   for (let i = 0; i < 24; i++) {
     const angle = (i / 24) * Math.PI * 2;
     const startR = outerR - 8;
     const endR = outerR - (i % 3 === 0 ? 1 : i % 3 === 1 ? 4 : 7);
-    
-    ctx.lineWidth = i % 3 === 0 ? 3 : 2;
-    ctx.beginPath();
-    ctx.moveTo(Math.cos(angle) * startR, Math.sin(angle) * startR);
-    ctx.lineTo(Math.cos(angle) * endR, Math.sin(angle) * endR);
-    ctx.stroke();
+    const strokeWidth = i % 3 === 0 ? 3 : 2;
+    const x1 = centerX + Math.cos(angle) * startR;
+    const y1 = avatarY + Math.sin(angle) * startR;
+    const x2 = centerX + Math.cos(angle) * endR;
+    const y2 = avatarY + Math.sin(angle) * endR;
+    svg += `
+  <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#00f7ff" stroke-width="${strokeWidth}" filter="url(#glow)"/>`;
   }
-  ctx.shadowBlur = 0;
-  
-  ctx.font = "700 9px Orbitron, sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  
+
   const techTexts = ["SYS", "NET", "CPU", "GPU", "RAM", "HDD", "API", "WEB"];
   for (let i = 0; i < techTexts.length; i++) {
     const angle = (i / techTexts.length) * Math.PI * 2 - Math.PI / 2;
     const textR = outerR + 18;
-    ctx.save();
-    ctx.translate(Math.cos(angle) * textR, Math.sin(angle) * textR);
-    ctx.rotate(angle + Math.PI / 2);
-    
-    ctx.shadowColor = "#00f7ff";
-    ctx.shadowBlur = 5;
-    ctx.fillStyle = "#00f7ff";
-    ctx.fillText(techTexts[i], 0, 0);
-    ctx.shadowBlur = 0;
-    
-    ctx.restore();
+    const x = centerX + Math.cos(angle) * textR;
+    const y = avatarY + Math.sin(angle) * textR;
+    const rotation = ((angle + Math.PI / 2) * 180 / Math.PI);
+    svg += `
+  <text x="${x}" y="${y}" font-size="9" font-weight="700" fill="#00f7ff" 
+        text-anchor="middle" dominant-baseline="middle" 
+        transform="rotate(${rotation}, ${x}, ${y})" 
+        filter="url(#glow)">${techTexts[i]}</text>`;
   }
-  
-  ctx.restore();
-  
-  // Draw main avatar
-  ctx.save();
-  if (avatarImg) {
-    ctx.beginPath();
-    ctx.arc(centerX, avatarY, avatarR, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.clip();
 
-    const img = avatarImg;
-    const r = Math.max((avatarR * 2) / img.width, (avatarR * 2) / img.height);
-    const iw = img.width * r;
-    const ih = img.height * r;
-    ctx.drawImage(img, centerX - iw / 2, avatarY - ih / 2, iw, ih);
-    ctx.restore();
-
-    ctx.beginPath();
-    ctx.arc(centerX, avatarY, avatarR, 0, Math.PI * 2);
-    ctx.lineWidth = 6;
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.arc(centerX, avatarY, avatarR + 6, 0, Math.PI * 2);
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = "#00f7ff";
-    ctx.shadowColor = "#00f7ff";
-    ctx.shadowBlur = 15;
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-    
-    ctx.beginPath();
-    ctx.arc(centerX, avatarY, avatarR - 3, 0, Math.PI * 2);
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgba(0, 247, 255, 0.5)";
-    ctx.stroke();
+  if (avatarBase64) {
+    svg += `
+  <image href="${avatarBase64}" x="${centerX - avatarR}" y="${avatarY - avatarR}" 
+         width="${avatarR * 2}" height="${avatarR * 2}" preserveAspectRatio="xMidYMid slice"
+         clip-path="url(#mainAvatarClip)"/>
+  <circle cx="${centerX}" cy="${avatarY}" r="${avatarR}" stroke="rgba(255,255,255,0.9)" stroke-width="6" fill="none"/>
+  <circle cx="${centerX}" cy="${avatarY}" r="${avatarR + 6}" stroke="#00f7ff" stroke-width="3" fill="none" filter="url(#strongGlow)"/>
+  <circle cx="${centerX}" cy="${avatarY}" r="${avatarR - 3}" stroke="rgba(0,247,255,0.5)" stroke-width="1" fill="none"/>`;
   } else {
-    ctx.beginPath();
-    ctx.arc(centerX, avatarY, avatarR, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
-    ctx.fill();
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-    ctx.stroke();
+    svg += `
+  <circle cx="${centerX}" cy="${avatarY}" r="${avatarR}" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.3)" stroke-width="4"/>`;
   }
 
-  // Robot icon
-  const name = (config.name || "NEEXT").toUpperCase();
-  ctx.font = "900 60px Orbitron, sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "top";
+  const robotIconX = centerX - 15;
+  const robotIconY = avatarY + avatarR + 60;
 
-  const nameWidth = ctx.measureText(name).width;
-  const robotIconX = centerX - nameWidth / 2 - 45;
+  svg += `
+  
+  <!-- Robot icon -->
+  <g transform="translate(${robotIconX}, ${robotIconY})">
+    <rect x="0" y="0" width="30" height="38" rx="4" fill="#00f7ff" filter="url(#strongGlow)"/>
+    <rect x="4" y="-14" width="22" height="18" rx="3" fill="#00f7ff"/>
+    <circle cx="11" cy="-7" r="2.5" fill="#000"/>
+    <circle cx="19" cy="-7" r="2.5" fill="#000"/>
+    <line x1="15" y1="-14" x2="15" y2="-22" stroke="#00f7ff" stroke-width="2"/>
+    <circle cx="15" cy="-23" r="3" fill="#ff0055" filter="url(#strongGlow)"/>
+  </g>
+  
+  <!-- Name -->
+  <text x="${centerX}" y="${avatarY + avatarR + 60}" font-size="60" font-weight="900" 
+        fill="#ffffff" text-anchor="middle" filter="url(#textGlow)">${name}</text>
+  
+  <!-- Speed with decorative frame -->
+  <rect x="${centerX - 160}" y="${avatarY + avatarR + 105}" width="320" height="85" fill="url(#frameGradient)"/>
+  
+  <g transform="translate(${centerX - 150}, ${avatarY + avatarR + 110})">
+    <polyline points="0,0 15,0 20,5 20,15" stroke="#00f7ff" stroke-width="2" fill="none"/>
+    <polyline points="0,15 0,5 5,0 15,0" stroke="#00f7ff" stroke-width="2" fill="none"/>
+  </g>
+  <g transform="translate(${centerX + 150}, ${avatarY + avatarR + 110})">
+    <polyline points="0,0 -15,0 -20,5 -20,15" stroke="#00f7ff" stroke-width="2" fill="none"/>
+    <polyline points="0,15 0,5 -5,0 -15,0" stroke="#00f7ff" stroke-width="2" fill="none"/>
+  </g>
+  <g transform="translate(${centerX - 150}, ${avatarY + avatarR + 185})">
+    <polyline points="0,0 15,0 20,-5 20,-15" stroke="#00f7ff" stroke-width="2" fill="none"/>
+    <polyline points="0,-15 0,-5 5,0 15,0" stroke="#00f7ff" stroke-width="2" fill="none"/>
+  </g>
+  <g transform="translate(${centerX + 150}, ${avatarY + avatarR + 185})">
+    <polyline points="0,0 -15,0 -20,-5 -20,-15" stroke="#00f7ff" stroke-width="2" fill="none"/>
+    <polyline points="0,-15 0,-5 -5,0 -15,0" stroke="#00f7ff" stroke-width="2" fill="none"/>
+  </g>
+  
+  <text x="${centerX}" y="${avatarY + avatarR + 150}" font-size="80" font-weight="900" 
+        fill="#00f7ff" text-anchor="middle" filter="url(#textGlow)">${speed}</text>
+  
+  <!-- Label below speed -->
+  <text x="${centerX}" y="${avatarY + avatarR + 180}" font-size="26" font-weight="700" 
+        fill="#ffffff" text-anchor="middle" letter-spacing="2" filter="url(#glow)">VELOCIDADE</text>
+  
+</svg>`;
 
-  ctx.save();
-  ctx.translate(robotIconX, avatarY + avatarR + 60);
-  
-  ctx.shadowColor = "#00f7ff";
-  ctx.shadowBlur = 15;
-  ctx.beginPath();
-  ctx.roundRect(0, 0, 30, 38, 4);
-  ctx.fillStyle = "#00f7ff";
-  ctx.fill();
-  ctx.shadowBlur = 0;
-  
-  ctx.beginPath();
-  ctx.roundRect(4, -14, 22, 18, 3);
-  ctx.fillStyle = "#00f7ff";
-  ctx.fill();
-  
-  ctx.beginPath();
-  ctx.arc(11, -7, 2.5, 0, Math.PI * 2);
-  ctx.arc(19, -7, 2.5, 0, Math.PI * 2);
-  ctx.fillStyle = "#000";
-  ctx.fill();
-  
-  ctx.strokeStyle = "#00f7ff";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(15, -14);
-  ctx.lineTo(15, -22);
-  ctx.stroke();
-  
-  ctx.beginPath();
-  ctx.arc(15, -23, 3, 0, Math.PI * 2);
-  ctx.fillStyle = "#ff0055";
-  ctx.shadowColor = "#ff0055";
-  ctx.shadowBlur = 10;
-  ctx.fill();
-  ctx.shadowBlur = 0;
-  
-  ctx.restore();
+  return svg;
+}
 
-  // Name
-  ctx.shadowColor = "#00f7ff";
-  ctx.shadowBlur = 25;
-  ctx.fillStyle = "#ffffff";
-  ctx.fillText(name, centerX, avatarY + avatarR + 50);
-  ctx.shadowBlur = 0;
+async function drawBanner(config) {
+  let wallpaperBase64 = null;
+  let avatarBase64 = null;
 
-  // Speed with decorative frame
-  const speed = String(config.speed || "999");
-  const speedY = avatarY + avatarR + 120;
-  
-  const frameGradient = ctx.createLinearGradient(centerX - 160, speedY, centerX + 160, speedY);
-  frameGradient.addColorStop(0, "rgba(0, 247, 255, 0.05)");
-  frameGradient.addColorStop(0.5, "rgba(0, 247, 255, 0.15)");
-  frameGradient.addColorStop(1, "rgba(0, 247, 255, 0.05)");
-  ctx.fillStyle = frameGradient;
-  ctx.fillRect(centerX - 160, speedY - 15, 320, 85);
-  
-  ctx.strokeStyle = "#00f7ff";
-  ctx.lineWidth = 3;
-  ctx.shadowColor = "#00f7ff";
-  ctx.shadowBlur = 10;
-  
-  ctx.beginPath();
-  ctx.moveTo(centerX - 160, speedY - 15);
-  ctx.lineTo(centerX - 130, speedY - 15);
-  ctx.moveTo(centerX - 160, speedY - 15);
-  ctx.lineTo(centerX - 160, speedY + 5);
-  ctx.stroke();
-  
-  ctx.beginPath();
-  ctx.moveTo(centerX + 130, speedY - 15);
-  ctx.lineTo(centerX + 160, speedY - 15);
-  ctx.moveTo(centerX + 160, speedY - 15);
-  ctx.lineTo(centerX + 160, speedY + 5);
-  ctx.stroke();
-  
-  ctx.beginPath();
-  ctx.moveTo(centerX - 160, speedY + 70);
-  ctx.lineTo(centerX - 130, speedY + 70);
-  ctx.moveTo(centerX - 160, speedY + 70);
-  ctx.lineTo(centerX - 160, speedY + 60);
-  ctx.stroke();
-  
-  ctx.beginPath();
-  ctx.moveTo(centerX + 130, speedY + 70);
-  ctx.lineTo(centerX + 160, speedY + 70);
-  ctx.moveTo(centerX + 160, speedY + 70);
-  ctx.lineTo(centerX + 160, speedY + 60);
-  ctx.stroke();
-  
-  ctx.shadowBlur = 0;
-  
-  ctx.font = "900 75px Orbitron, sans-serif";
-  ctx.fillStyle = "#00f7ff";
-  ctx.shadowColor = "#00f7ff";
-  ctx.shadowBlur = 25;
-  ctx.fillText(speed, centerX, speedY);
-  ctx.shadowBlur = 0;
-  
-  ctx.save();
-  ctx.translate(centerX - 190, speedY + 35);
-  ctx.shadowColor = "#00f7ff";
-  ctx.shadowBlur = 8;
-  for (let i = 0; i < 4; i++) {
-    ctx.strokeStyle = `rgba(0, 247, 255, ${0.8 - i * 0.2})`;
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(i * 12, -12);
-    ctx.lineTo(i * 12 + 12, 0);
-    ctx.lineTo(i * 12, 12);
-    ctx.stroke();
-  }
-  ctx.restore();
-  
-  ctx.save();
-  ctx.translate(centerX + 190, speedY + 35);
-  for (let i = 0; i < 4; i++) {
-    ctx.strokeStyle = `rgba(0, 247, 255, ${0.8 - i * 0.2})`;
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(-i * 12, -12);
-    ctx.lineTo(-i * 12 - 12, 0);
-    ctx.lineTo(-i * 12, 12);
-    ctx.stroke();
-  }
-  ctx.restore();
-  ctx.shadowBlur = 0;
-
-  // Label
-  const label = (config.label || "VELOCIDADE").toUpperCase();
-  ctx.font = "700 38px Orbitron, sans-serif";
-  ctx.fillStyle = "#ffffff";
-  ctx.shadowColor = "rgba(255, 255, 255, 0.5)";
-  ctx.shadowBlur = 10;
-  ctx.fillText(label, centerX, speedY + 75);
-  ctx.shadowBlur = 0;
-
-  // System
-  const system = (config.system || "").toUpperCase();
-  if (system) {
-    const systemY = speedY + 125;
-    
-    ctx.font = "600 22px Orbitron, sans-serif";
-    const systemTextWidth = ctx.measureText(system).width;
-    const iconX = centerX - systemTextWidth / 2 - 30;
-    
-    ctx.save();
-    ctx.translate(iconX, systemY);
-    ctx.strokeStyle = "#00f7ff";
-    ctx.lineWidth = 2;
-    ctx.shadowColor = "#00f7ff";
-    ctx.shadowBlur = 8;
-    
-    ctx.beginPath();
-    ctx.roundRect(-8, -6, 16, 12, 2);
-    ctx.stroke();
-    
-    ctx.beginPath();
-    ctx.moveTo(-3, 6);
-    ctx.lineTo(-3, 9);
-    ctx.lineTo(3, 9);
-    ctx.lineTo(3, 6);
-    ctx.stroke();
-    
-    ctx.beginPath();
-    ctx.moveTo(-5, 9);
-    ctx.lineTo(5, 9);
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
-    
-    ctx.fillStyle = "rgba(0, 247, 255, 0.3)";
-    ctx.fillRect(-6, -4, 12, 8);
-    
-    ctx.restore();
-    ctx.shadowBlur = 0;
-    
-    ctx.fillStyle = "#00f7ff";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.shadowColor = "#00f7ff";
-    ctx.shadowBlur = 15;
-    ctx.fillText(system, centerX, systemY);
-    ctx.shadowBlur = 0;
+  if (config.wallpaper) {
+    wallpaperBase64 = await loadImageAsBase64(config.wallpaper);
   }
 
-  return canvas.toBuffer('image/png');
+  if (config.avatar) {
+    avatarBase64 = await loadImageAsBase64(config.avatar);
+  }
+
+  const svgString = generateBannerSVG(config, wallpaperBase64, avatarBase64);
+  
+  const imageBuffer = await sharp(Buffer.from(svgString))
+    .png()
+    .toBuffer();
+
+  return imageBuffer;
 }
 
 app.post('/api/generate', async (req, res) => {
   try {
     const { name, speed, label, system, datetime, wallpaper, avatar } = req.body;
 
-    if ((wallpaper && !isValidImageUrl(wallpaper)) || (avatar && !isValidImageUrl(avatar))) {
+    if (wallpaper && !isValidImageUrl(wallpaper)) {
       return res.status(400).json({
         success: false,
-        error: 'URL de imagem inválida. Use apenas URLs HTTPS de imagens válidas.',
+        error: 'URL do wallpaper inválida. Use HTTPS.'
       });
     }
 
-    const pngBuffer = await drawBanner({ name, speed, label, system, datetime, wallpaper, avatar });
+    if (avatar && !isValidImageUrl(avatar)) {
+      return res.status(400).json({
+        success: false,
+        error: 'URL do avatar inválida. Use HTTPS.'
+      });
+    }
 
-    // Retorna a imagem diretamente
+    const config = {
+      name: name || 'NEEXT',
+      speed: speed || '999',
+      label: label || 'VELOCIDADE',
+      system: system || 'ONLINE',
+      datetime: datetime,
+      wallpaper: wallpaper,
+      avatar: avatar
+    };
+
+    const imageBuffer = await drawBanner(config);
+
     res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Content-Length', pngBuffer.length);
-    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-    res.setHeader('Content-Disposition', `inline; filename="banner-${name || 'neext'}-${speed || '999'}.png"`);
+    res.setHeader('Content-Length', imageBuffer.length);
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Content-Disposition', `inline; filename="banner-${config.name}-${config.speed}.png"`);
     
-    return res.status(200).send(pngBuffer);
-
+    return res.status(200).send(imageBuffer);
   } catch (error) {
     console.error('Erro ao gerar banner:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      error: error.message,
+      error: error.message
     });
   }
 });
@@ -912,65 +534,63 @@ app.get('/api/banner', async (req, res) => {
   try {
     const { name, speed, label, system, datetime, wallpaper, avatar } = req.query;
 
-    if ((wallpaper && !isValidImageUrl(wallpaper)) || (avatar && !isValidImageUrl(avatar))) {
+    if (wallpaper && !isValidImageUrl(wallpaper)) {
       return res.status(400).json({
         success: false,
-        error: 'URL de imagem inválida. Use apenas URLs HTTPS de imagens válidas.',
+        error: 'URL do wallpaper inválida. Use HTTPS.'
       });
     }
 
-    const pngBuffer = await drawBanner({ name, speed, label, system, datetime, wallpaper, avatar });
+    if (avatar && !isValidImageUrl(avatar)) {
+      return res.status(400).json({
+        success: false,
+        error: 'URL do avatar inválida. Use HTTPS.'
+      });
+    }
 
-    // Retorna a imagem diretamente
+    const config = {
+      name: name || 'NEEXT',
+      speed: speed || '999',
+      label: label || 'VELOCIDADE',
+      system: system || 'ONLINE',
+      datetime: datetime,
+      wallpaper: wallpaper,
+      avatar: avatar
+    };
+
+    const imageBuffer = await drawBanner(config);
+
     res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Content-Length', pngBuffer.length);
+    res.setHeader('Content-Length', imageBuffer.length);
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-    res.setHeader('Content-Disposition', `inline; filename="banner-${name || 'neext'}-${speed || '999'}.png"`);
+    res.setHeader('Content-Disposition', `inline; filename="banner-${config.name}-${config.speed}.png"`);
     
-    return res.status(200).send(pngBuffer);
-
+    return res.status(200).send(imageBuffer);
   } catch (error) {
     console.error('Erro ao gerar banner:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      error: error.message,
+      error: error.message
     });
   }
 });
 
 app.get('/', (req, res) => {
   res.json({
-    name: 'NEEXT Banner API',
-    version: '1.0.0',
-    status: 'online',
-    endpoints: {
-      health: {
-        method: 'GET',
-        path: '/health',
-        description: 'Verificar status da API'
-      },
-      generateBanner: {
-        method: 'GET',
-        path: '/api/banner',
-        description: 'Gerar banner e retornar imagem PNG diretamente',
-        parameters: {
-          name: 'Nome a exibir (ex: NEEXT)',
-          speed: 'Valor numérico (ex: 999)',
-          label: 'Texto do rótulo (ex: VELOCIDADE)',
-          system: 'Nome do sistema (ex: WINDOWS 11)',
-          wallpaper: 'URL HTTPS da imagem de fundo',
-          avatar: 'URL HTTPS da foto de perfil',
-          datetime: 'Data e hora customizada (ex: 16/10/2025 - 20:30)'
-        },
-        example: '/api/banner?name=TESTE&speed=100&label=PING&system=WINDOWS 11'
-      }
-    },
-    documentation: 'Veja API_README.md para documentação completa'
+    success: true,
+    message: 'NEEXT Banner API com Sharp',
+    endpoint: '/api/banner',
+    method: 'GET ou POST',
+    params: {
+      name: 'Nome do usuário',
+      speed: 'Velocidade',
+      label: 'Rótulo inferior',
+      system: 'Status do sistema',
+      datetime: 'Data e hora customizados',
+      wallpaper: 'URL do wallpaper',
+      avatar: 'URL do avatar'
+    }
   });
-});
-
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
 });
 
 app.listen(PORT, '0.0.0.0', () => {
