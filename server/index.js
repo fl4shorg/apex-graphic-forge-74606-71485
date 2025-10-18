@@ -4,6 +4,7 @@ import sharp from 'sharp';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { readFileSync } from 'fs';
+import FormData from 'form-data';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -39,6 +40,32 @@ async function loadImageAsBase64(url) {
   } catch (e) {
     console.error('Erro ao carregar imagem:', e.message);
     return null;
+  }
+}
+
+async function uploadToCatbox(imageBuffer, filename) {
+  try {
+    const form = new FormData();
+    form.append('file', imageBuffer, {
+      filename: filename,
+      contentType: 'image/png'
+    });
+
+    const response = await fetch('https://www.api.neext.online/upload/catbox', {
+      method: 'POST',
+      body: form,
+      headers: form.getHeaders()
+    });
+
+    if (!response.ok) {
+      throw new Error(`Catbox upload failed: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.url || data.link || data;
+  } catch (e) {
+    console.error('Erro ao fazer upload para Catbox:', e.message);
+    throw e;
   }
 }
 
@@ -519,16 +546,28 @@ app.post('/api/generate', async (req, res) => {
       avatar: avatar
     };
 
+    console.log('🎨 Gerando banner com Sharp...');
     const imageBuffer = await drawBanner(config);
-
-    res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Content-Length', imageBuffer.length);
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Content-Disposition', `inline; filename="banner-${config.name}-${config.speed}.png"`);
     
-    return res.status(200).send(imageBuffer);
+    console.log('📤 Fazendo upload para Catbox...');
+    const catboxUrl = await uploadToCatbox(imageBuffer, `banner-${config.name}-${config.speed}.png`);
+    
+    console.log('✅ Banner gerado e enviado:', catboxUrl);
+
+    return res.status(200).json({
+      success: true,
+      url: catboxUrl,
+      timestamp: new Date().toISOString(),
+      config: {
+        name: config.name,
+        speed: config.speed,
+        label: config.label,
+        system: config.system,
+        datetime: config.datetime || ''
+      }
+    });
   } catch (error) {
-    console.error('Erro ao gerar banner:', error);
+    console.error('❌ Erro ao gerar banner:', error);
     return res.status(500).json({
       success: false,
       error: error.message
