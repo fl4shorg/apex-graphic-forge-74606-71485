@@ -144,22 +144,26 @@ npm run build
 - Método: POST
 - FormData: campo "file" com a imagem PNG
 
-## Mudanças Recentes (16/10/2025)
+## Mudanças Recentes
 
-### Migração para Satori (Vercel OG)
+### 18/10/2025 - Migração para Sharp
+- **Removido**: @napi-rs/canvas, Satori, @resvg/resvg-js
+- **Adicionado**: Sharp (biblioteca de processamento de imagens de alta performance)
+- **Método de geração**: SVG programático → PNG via Sharp
+- **Fontes**: Orbitron incorporada como base64 no SVG (não requer fontes externas)
+- **Performance**: 4-5x mais rápido que canvas/ImageMagick
+- **Compatibilidade**: Mantém 100% de compatibilidade com API existente
+- **Campos dinâmicos**: label e system agora totalmente customizáveis via API
+
+### 16/10/2025 - API REST para Deploy
 - Implementada API backend com Express na porta 3001
-- Geração de imagens com Satori (JSX → SVG → PNG via Resvg)
-- Upload automático para Catbox via node-catbox
-- Proxy configurado no Vite para /api → http://localhost:3001
-
-### API REST para Deploy no Render
 - Criado endpoint GET /api/banner com parâmetros via query string
 - Servidor usa process.env.PORT para compatibilidade com Render
 - Arquivo render.yaml configurado para deploy automático
 - API_README.md com documentação completa e exemplos de uso
-- Comando de start otimizado: `cd server && node index.js`
+- Comando de start otimizado: `node server/index.js & bunx --bun vite`
 
 ### Segurança
 - **HTTPS obrigatório**: Apenas URLs HTTPS são aceitas
 - **Formatos válidos**: .jpg, .jpeg, .png, .gif, .webp
-- **UUID temp files**: Arquivos temporários únicos com cleanup garantido
+- **Imagens incorporadas**: Wallpaper e avatar convertidos para base64 no SVG
